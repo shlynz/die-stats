@@ -5,6 +5,7 @@ pub trait ProbabilityDistribution {
     fn add_dependent<F>(&self, callback_fn: F) -> Die
     where
         F: Fn(&i32) -> Die;
+    fn add_flat(&self, flat_increase: i32) -> Die;
     fn get_chance(&self, value: i32) -> f64;
     fn get_result(&self) -> Vec<i32>;
     fn get_min(&self) -> i32;
@@ -28,16 +29,27 @@ pub struct Die {
 
 impl Die {
     pub fn new(sides: i32) -> Die {
-        Die::from_range(1, sides)
+        if sides == 0 {
+            Die::empty()
+        } else {
+            Die::from_range(1, sides)
+        }
     }
 
-    fn from_range(start: i32, end: i32) -> Die {
-        Die::from_values((start..=end).collect::<Vec<i32>>())
+    pub fn from_range(start: i32, end: i32) -> Die {
+        if end < start {
+            panic!("Can't create a Die with the given parameters");
+        }
+        if end - start == 0 {
+            Die::empty()
+        } else {
+            Die::from_values((start..=end).collect::<Vec<i32>>())
+        }
     }
 
-    fn from_values(values: Vec<i32>) -> Die {
+    pub fn from_values(values: Vec<i32>) -> Die {
         if values.is_empty() {
-            panic!("Contains no values")
+            return Die::empty();
         };
         let min = values.iter().min().unwrap().clone();
         let max = values.iter().max().unwrap().clone();
@@ -55,11 +67,31 @@ impl Die {
             median,
         }
     }
+
+    pub fn empty() -> Die {
+        Die {
+            values: vec![0],
+            min: 0,
+            max: 0,
+            variance: 0 as f64,
+            standard_deviation: 0 as f64,
+            mean: 0 as f64,
+            median: 0 as f64,
+        }
+    }
 }
 
 impl ProbabilityDistribution for Die {
     fn add(&self, probability_distribution: impl ProbabilityDistribution) -> Die {
-        unimplemented!()
+        let mut new_result = Vec::new();
+        probability_distribution
+            .get_result()
+            .iter()
+            .for_each(|value| {
+                new_result.append(&mut self.add_flat(*value).get_result());
+            });
+        let new_result = Die::from_values(new_result);
+        new_result
     }
 
     fn add_dependent<F>(&self, callback_fn: F) -> Die
@@ -67,6 +99,15 @@ impl ProbabilityDistribution for Die {
         F: Fn(&i32) -> Die,
     {
         unimplemented!()
+    }
+
+    fn add_flat(&self, flat_increase: i32) -> Die {
+        let mut new_result = Vec::new();
+        self.values.iter().for_each(|val| {
+            new_result.push(val + flat_increase);
+        });
+        let new_result = Die::from_values(new_result);
+        new_result
     }
 
     fn get_chance(&self, value: i32) -> f64 {

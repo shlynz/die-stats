@@ -2,8 +2,8 @@ use core::ops::Add;
 use std::{cmp::Ordering, f64};
 
 pub trait ProbabilityDistribution {
-    fn add(&self, probability_distribution: impl ProbabilityDistribution) -> Die;
-    fn add_dependent<F>(&self, callback_fn: F) -> Die
+    fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution) -> Die;
+    fn add_dependent<F>(&self, callback_fn: &F) -> Die
     where
         F: Fn(&i32) -> Die;
     fn add_flat(&self, flat_increase: i32) -> Die;
@@ -145,7 +145,7 @@ impl ProbabilityDistribution for Die {
         &self.standard_deviation
     }
 
-    fn add(&self, probability_distribution: impl ProbabilityDistribution) -> Die {
+    fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution) -> Die {
         Die::from_probabilities(
             probability_distribution
                 .get_probabilities()
@@ -159,7 +159,7 @@ impl ProbabilityDistribution for Die {
         )
     }
 
-    fn add_dependent<F>(&self, callback_fn: F) -> Die
+    fn add_dependent<F>(&self, callback_fn: &F) -> Die
     where
         F: Fn(&i32) -> Die,
     {
@@ -188,6 +188,25 @@ impl ProbabilityDistribution for Die {
                 })
                 .collect(),
         )
+    }
+}
+
+impl<'a> Add<&'a Die> for &'a Die {
+    type Output = Die;
+
+    fn add(self, rhs: &'a Die) -> Die {
+        self.add_independent(rhs)
+    }
+}
+
+impl<'a, F> Add<&'a F> for &'a Die
+where
+    F: Fn(&i32) -> Die,
+{
+    type Output = Die;
+
+    fn add(self, rhs: &'a F) -> Die {
+        self.add_dependent(rhs)
     }
 }
 

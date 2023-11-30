@@ -1,4 +1,5 @@
-use std::f64;
+use core::ops::Add;
+use std::{cmp::Ordering, f64};
 
 pub trait ProbabilityDistribution {
     fn add(&self, probability_distribution: impl ProbabilityDistribution) -> Die;
@@ -6,25 +7,28 @@ pub trait ProbabilityDistribution {
     where
         F: Fn(&i32) -> Die;
     fn add_flat(&self, flat_increase: i32) -> Die;
-    fn get_chance(&self, value: i32) -> f64;
-    fn get_result(&self) -> Vec<i32>;
-    fn get_min(&self) -> i32;
-    fn get_max(&self) -> i32;
-    fn get_variance(&self) -> f64;
-    fn get_standard_deviation(&self) -> f64;
-    fn get_mean(&self) -> f64;
-    fn get_median(&self) -> f64;
+    fn get_probabilities(&self) -> &Vec<Probability>;
+    fn get_min(&self) -> &i32;
+    fn get_max(&self) -> &i32;
+    fn get_variance(&self) -> &f64;
+    fn get_standard_deviation(&self) -> &f64;
+    fn get_mean(&self) -> &f64;
 }
 
 #[derive(Debug)]
 pub struct Die {
-    values: Vec<i32>,
+    probabilities: Vec<Probability>,
     min: i32,
     max: i32,
     variance: f64,
     standard_deviation: f64,
     mean: f64,
-    median: f64,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Probability {
+    value: i32,
+    chance: f64,
 }
 
 impl Die {
@@ -48,138 +52,168 @@ impl Die {
     }
 
     pub fn from_values(values: Vec<i32>) -> Die {
-        if values.is_empty() {
+        Die::from_probabilities(values_to_probabilities(&values))
+    }
+
+    pub fn from_probabilities(probabilities: Vec<Probability>) -> Self {
+        if probabilities.is_empty() {
             return Die::empty();
-        };
-        let min = values.iter().min().unwrap().clone();
-        let max = values.iter().max().unwrap().clone();
-        let variance = calc_variance(&values);
-        let standard_deviation = calc_standard_deviation(&values);
-        let mean = calc_mean(&values);
-        let median = calc_median(&values);
+        }
+        let min = probabilities.iter().min().unwrap().value.clone();
+        let max = probabilities.iter().max().unwrap().value.clone();
+        let variance = calc_variance(&probabilities);
+        let standard_deviation = calc_standard_deviation(&probabilities);
+        let mean = calc_mean(&probabilities);
         Die {
-            values,
+            probabilities,
             min,
             max,
             variance,
             standard_deviation,
             mean,
-            median,
         }
     }
 
     pub fn empty() -> Die {
         Die {
-            values: vec![0],
+            probabilities: vec![Probability {
+                value: 0,
+                chance: 1.0,
+            }],
             min: 0,
             max: 0,
             variance: 0 as f64,
             standard_deviation: 0 as f64,
             mean: 0 as f64,
-            median: 0 as f64,
         }
     }
 }
 
+impl Add for Probability {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Probability {
+            value: self.value + other.value,
+            chance: self.chance * other.chance,
+        }
+    }
+}
+
+impl PartialEq for Probability {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+
+impl Eq for Probability {}
+
+impl PartialOrd for Probability {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Probability {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.value.cmp(&other.value)
+    }
+}
+
 impl ProbabilityDistribution for Die {
+    fn get_probabilities(&self) -> &Vec<Probability> {
+        &self.probabilities
+    }
+
+    fn get_min(&self) -> &i32 {
+        &self.min
+    }
+
+    fn get_max(&self) -> &i32 {
+        &self.max
+    }
+
+    fn get_mean(&self) -> &f64 {
+        &self.mean
+    }
+
+    fn get_variance(&self) -> &f64 {
+        &self.variance
+    }
+
+    fn get_standard_deviation(&self) -> &f64 {
+        &self.standard_deviation
+    }
+
     fn add(&self, probability_distribution: impl ProbabilityDistribution) -> Die {
-        let mut new_result = Vec::new();
-        probability_distribution
-            .get_result()
-            .iter()
-            .for_each(|value| {
-                new_result.append(&mut self.add_flat(*value).get_result());
-            });
-        let new_result = Die::from_values(new_result);
-        new_result
+        Die::from_probabilities(
+            probability_distribution
+                .get_probabilities()
+                .iter()
+                .flat_map(|outer_prob| {
+                    self.get_probabilities()
+                        .iter()
+                        .map(|inner_prob| *outer_prob + *inner_prob)
+                })
+                .collect(),
+        )
     }
 
     fn add_dependent<F>(&self, callback_fn: F) -> Die
     where
         F: Fn(&i32) -> Die,
     {
-        unimplemented!()
+        Die::from_probabilities(
+            self.get_probabilities()
+                .iter()
+                .flat_map(|outer_prob| {
+                    callback_fn(&outer_prob.value)
+                        .get_probabilities()
+                        .iter()
+                        .map(|inner_prob| *outer_prob + *inner_prob)
+                        // dislike the collect here...
+                        .collect::<Vec<Probability>>()
+                })
+                .collect(),
+        )
     }
 
     fn add_flat(&self, flat_increase: i32) -> Die {
-        let mut new_result = Vec::new();
-        self.values.iter().for_each(|val| {
-            new_result.push(val + flat_increase);
-        });
-        let new_result = Die::from_values(new_result);
-        new_result
-    }
-
-    fn get_chance(&self, value: i32) -> f64 {
-        println!("{:?}", value);
-        unimplemented!()
-    }
-
-    fn get_result(&self) -> Vec<i32> {
-        self.values.clone()
-    }
-
-    fn get_min(&self) -> i32 {
-        self.min
-    }
-
-    fn get_max(&self) -> i32 {
-        self.max
-    }
-
-    fn get_mean(&self) -> f64 {
-        self.mean
-    }
-
-    fn get_median(&self) -> f64 {
-        self.median
-    }
-
-    fn get_variance(&self) -> f64 {
-        self.variance
-    }
-
-    fn get_standard_deviation(&self) -> f64 {
-        self.standard_deviation
+        Die::from_probabilities(
+            self.get_probabilities()
+                .iter()
+                .map(|prob| Probability {
+                    value: prob.value + flat_increase,
+                    chance: prob.chance,
+                })
+                .collect(),
+        )
     }
 }
 
-fn calc_mean(values: &Vec<i32>) -> f64 {
-    let sum = values.iter().sum::<i32>() as f64;
-    let count = values.len();
-    return if count > 0 { sum / count as f64 } else { 0.0 };
-}
-
-fn calc_variance(values: &Vec<i32>) -> f64 {
-    let mean = calc_mean(&values);
+fn values_to_probabilities(values: &Vec<i32>) -> Vec<Probability> {
+    let chance = 1.0 / values.len() as f64;
     values
         .iter()
-        .map(|value| {
-            let diff = mean - (*value as f64);
-            diff * diff
+        .map(|value| Probability {
+            value: *value,
+            chance,
         })
-        .sum::<f64>()
-        / values.len() as f64
+        .collect()
 }
 
-fn calc_standard_deviation(values: &Vec<i32>) -> f64 {
+fn calc_mean(values: &Vec<Probability>) -> f64 {
+    values
+        .iter()
+        .fold(0.0, |acc, prob| acc + prob.chance * prob.value as f64)
+}
+
+fn calc_variance(values: &Vec<Probability>) -> f64 {
+    values.iter().fold(0.0, |acc, prob| {
+        acc + prob.chance * prob.value.pow(2) as f64
+    })
+}
+
+fn calc_standard_deviation(values: &Vec<Probability>) -> f64 {
     calc_variance(&values).sqrt()
-}
-
-fn calc_median(values: &Vec<i32>) -> f64 {
-    let mut sorted_values = values.clone();
-    sorted_values.sort();
-    let sorted_values = sorted_values
-        .into_iter()
-        .map(|value| f64::from(value))
-        .collect::<Vec<f64>>();
-    let index_middle = sorted_values.len() / 2 - 1;
-
-    return if sorted_values.len() == 1 {
-        sorted_values[0]
-    } else if sorted_values.len() % 2 == 0 {
-        sorted_values[index_middle] + sorted_values[index_middle + 1] / 2 as f64
-    } else {
-        sorted_values[index_middle]
-    };
 }

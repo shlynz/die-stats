@@ -211,7 +211,7 @@ fn calc_mean(values: &Vec<Probability>) -> f64 {
 fn calc_variance(values: &Vec<Probability>) -> f64 {
     values.iter().fold(0.0, |acc, prob| {
         acc + prob.chance * prob.value.pow(2) as f64
-    })
+    }) - calc_mean(&values).powi(2)
 }
 
 fn calc_standard_deviation(values: &Vec<Probability>) -> f64 {

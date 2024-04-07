@@ -1,6 +1,10 @@
 use core::ops::Add;
 use std::{cmp::Ordering, f64};
 
+const NAME_FORMAT: usize = 20;
+const NUMBER_FORMAT: usize = 10;
+const DECIMAL_FORMAT: usize = 3;
+
 pub trait ProbabilityDistribution {
     fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution) -> Die;
     fn add_dependent<F>(&self, callback_fn: &F) -> Die
@@ -27,8 +31,8 @@ pub struct Die {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Probability {
-    value: i32,
-    chance: f64,
+    pub value: i32,
+    pub chance: f64,
 }
 
 impl Die {
@@ -120,6 +124,19 @@ impl Ord for Probability {
     }
 }
 
+impl std::fmt::Display for Probability {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "\
+            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$}\n\
+            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+            ",
+            "Value", self.value, "Chance", self.chance
+        )
+    }
+}
+
 impl ProbabilityDistribution for Die {
     fn get_probabilities(&self) -> &Vec<Probability> {
         &self.probabilities
@@ -187,6 +204,32 @@ impl ProbabilityDistribution for Die {
                     chance: prob.chance,
                 })
                 .collect(),
+        )
+    }
+}
+
+impl std::fmt::Display for Die {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "\
+            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$}\n\
+            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$}\n\
+            \n\
+            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\
+            ",
+            "Min",
+            self.min,
+            "Max",
+            self.max,
+            "Variance",
+            self.variance,
+            "Standard Deviation",
+            self.standard_deviation,
+            "Mean",
+            self.mean,
         )
     }
 }

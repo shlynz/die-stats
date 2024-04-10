@@ -4,6 +4,7 @@ use std::{cmp::Ordering, collections::HashMap, f64};
 const NAME_FORMAT: usize = 20;
 const NUMBER_FORMAT: usize = 10;
 const DECIMAL_FORMAT: usize = 3;
+const BAR_LENGTH: usize = 50;
 
 pub trait ProbabilityDistribution {
     fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution) -> Die;
@@ -16,6 +17,8 @@ pub trait ProbabilityDistribution {
     fn add_flat(&self, flat_increase: i32) -> Die;
     fn get_probabilities(&self) -> &Vec<Probability>;
     fn iter(&self) -> ProbabilityIter;
+    fn get_results(&self) -> String;
+    fn get_details(&self) -> String;
     fn get_min(&self) -> &i32;
     fn get_max(&self) -> &i32;
     fn get_variance(&self) -> &f64;
@@ -73,7 +76,7 @@ impl Die {
         let standard_deviation = calc_standard_deviation(&probabilities);
         let mean = calc_mean(&probabilities);
         Die {
-            probabilities,
+            probabilities: compress_additive(&probabilities),
             min,
             max,
             variance,
@@ -143,11 +146,10 @@ impl std::fmt::Display for Probability {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "\
-            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$}\n\
-            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
-            ",
-            "Value", self.value, "Chance", self.chance
+            "{:>NUMBER_FORMAT$} : {:>NUMBER_FORMAT$.DECIMAL_FORMAT$} : {:-<BAR_LENGTH$}",
+            self.value,
+            self.chance,
+            "#".repeat((self.chance * BAR_LENGTH as f64).floor() as usize)
         )
     }
 }
@@ -246,6 +248,15 @@ impl ProbabilityDistribution for Die {
             values: &self.probabilities,
             index: 0,
         }
+    }
+
+    fn get_results(&self) -> String {
+        // TODO get rid of newline at end
+        self.iter().map(|prob| format!("{prob}\n")).collect()
+    }
+
+    fn get_details(&self) -> String {
+        format!("{}", self)
     }
 }
 

@@ -15,6 +15,7 @@ pub trait ProbabilityDistribution {
         F: Fn(&i32) -> Die;
     fn add_flat(&self, flat_increase: i32) -> Die;
     fn get_probabilities(&self) -> &Vec<Probability>;
+    fn iter(&self) -> ProbabilityIter;
     fn get_min(&self) -> &i32;
     fn get_max(&self) -> &i32;
     fn get_variance(&self) -> &f64;
@@ -239,6 +240,13 @@ impl ProbabilityDistribution for Die {
                 .collect(),
         )
     }
+
+    fn iter(&self) -> ProbabilityIter {
+        ProbabilityIter {
+            values: &self.probabilities,
+            index: 0,
+        }
+    }
 }
 
 impl std::fmt::Display for Die {
@@ -302,6 +310,25 @@ where
 
     fn add(self, rhs: F) -> Self::Output {
         self.add_dependent(&rhs)
+    }
+}
+
+pub struct ProbabilityIter<'a> {
+    values: &'a Vec<Probability>,
+    index: usize,
+}
+
+impl<'a> Iterator for ProbabilityIter<'a> {
+    type Item = &'a Probability;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        return if self.index < self.values.len() {
+            let result = Some(&self.values[self.index]);
+            self.index += 1;
+            result
+        } else {
+            None
+        };
     }
 }
 

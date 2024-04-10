@@ -1,5 +1,5 @@
-use core::ops::Add;
-use std::{cmp::Ordering, f64};
+use core::ops::{Add, Mul};
+use std::{cmp::Ordering, collections::HashMap, f64};
 
 const NAME_FORMAT: usize = 20;
 const NUMBER_FORMAT: usize = 10;
@@ -8,6 +8,9 @@ const DECIMAL_FORMAT: usize = 3;
 pub trait ProbabilityDistribution {
     fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution) -> Die;
     fn add_dependent<F>(&self, callback_fn: &F) -> Die
+    where
+        F: Fn(&i32) -> Die;
+    fn conditional_chain<F>(&self, callback_fn: &F) -> Die
     where
         F: Fn(&i32) -> Die;
     fn add_flat(&self, flat_increase: i32) -> Die;
@@ -19,7 +22,7 @@ pub trait ProbabilityDistribution {
     fn get_mean(&self) -> &f64;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Die {
     probabilities: Vec<Probability>,
     min: i32,
@@ -100,6 +103,17 @@ impl Add for Probability {
         Probability {
             value: self.value + other.value,
             chance: self.chance * other.chance,
+        }
+    }
+}
+
+impl Mul<f64> for Probability {
+    type Output = Probability;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Probability {
+            value: self.value,
+            chance: self.chance * rhs,
         }
     }
 }
@@ -195,6 +209,25 @@ impl ProbabilityDistribution for Die {
         )
     }
 
+    fn conditional_chain<F>(&self, callback_fn: &F) -> Die
+    where
+        F: Fn(&i32) -> Die,
+    {
+        Die::from_probabilities(compress_additive(
+            &self
+                .get_probabilities()
+                .iter()
+                .flat_map(|outer_prob| {
+                    callback_fn(&outer_prob.value)
+                        .get_probabilities()
+                        .iter()
+                        .map(|inner_prob| *inner_prob * outer_prob.chance)
+                        .collect::<Vec<Probability>>()
+                })
+                .collect(),
+        ))
+    }
+
     fn add_flat(&self, flat_increase: i32) -> Die {
         Die::from_probabilities(
             self.get_probabilities()
@@ -237,8 +270,16 @@ impl std::fmt::Display for Die {
 impl<'a> Add<&'a Die> for &'a Die {
     type Output = Die;
 
-    fn add(self, rhs: &'a Die) -> Die {
+    fn add(self, rhs: &'a Die) -> Self::Output {
         self.add_independent(rhs)
+    }
+}
+
+impl Add<Die> for Die {
+    type Output = Die;
+
+    fn add(self, rhs: Die) -> Self::Output {
+        self.add_independent(&rhs)
     }
 }
 
@@ -248,8 +289,19 @@ where
 {
     type Output = Die;
 
-    fn add(self, rhs: &'a F) -> Die {
+    fn add(self, rhs: &'a F) -> Self::Output {
         self.add_dependent(rhs)
+    }
+}
+
+impl<F> Add<F> for Die
+where
+    F: Fn(&i32) -> Die,
+{
+    type Output = Die;
+
+    fn add(self, rhs: F) -> Self::Output {
+        self.add_dependent(&rhs)
     }
 }
 
@@ -278,4 +330,26 @@ fn calc_variance(values: &Vec<Probability>) -> f64 {
 
 fn calc_standard_deviation(values: &Vec<Probability>) -> f64 {
     calc_variance(&values).sqrt()
+}
+
+pub fn compress_additive(values: &Vec<Probability>) -> Vec<Probability> {
+    let mut value_map = HashMap::new();
+
+    for prob in values {
+        if let Some(chance) = value_map.get_mut(&prob.value) {
+            *chance += prob.chance;
+        } else {
+            value_map.insert(prob.value, prob.chance);
+        }
+    }
+
+    let mut result = Vec::new();
+    for (key, value) in value_map {
+        result.push(Probability {
+            value: key,
+            chance: value,
+        });
+    }
+    result.sort();
+    result
 }

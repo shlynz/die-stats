@@ -5,7 +5,7 @@ use core::ops::Add;
 
 #[derive(Debug, Clone)]
 pub struct Die {
-    probabilities: Vec<Probability>,
+    probabilities: Vec<Probability<i32>>,
 }
 
 impl Die {
@@ -32,7 +32,7 @@ impl Die {
         Die::from_probabilities(values_to_probabilities(&values))
     }
 
-    pub fn from_probabilities(probabilities: Vec<Probability>) -> Self {
+    pub fn from_probabilities(probabilities: Vec<Probability<i32>>) -> Self {
         if probabilities.is_empty() {
             return Die::empty();
         }
@@ -51,8 +51,8 @@ impl Die {
     }
 }
 
-impl ProbabilityDistribution for Die {
-    fn get_probabilities(&self) -> &Vec<Probability> {
+impl ProbabilityDistribution<i32> for Die {
+    fn get_probabilities(&self) -> &Vec<Probability<i32>> {
         &self.probabilities
     }
 
@@ -76,7 +76,7 @@ impl ProbabilityDistribution for Die {
         calc_standard_deviation(&self.get_probabilities())
     }
 
-    fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution) -> Die {
+    fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution<i32>) -> Die {
         Die::from_probabilities(
             probability_distribution
                 .get_probabilities()
@@ -103,7 +103,7 @@ impl ProbabilityDistribution for Die {
                         .iter()
                         .map(|inner_prob| *outer_prob + *inner_prob)
                         // dislike the collect here...
-                        .collect::<Vec<Probability>>()
+                        .collect::<Vec<Probability<i32>>>()
                 })
                 .collect(),
         )
@@ -122,7 +122,7 @@ impl ProbabilityDistribution for Die {
                         .get_probabilities()
                         .iter()
                         .map(|inner_prob| *inner_prob * outer_prob.chance)
-                        .collect::<Vec<Probability>>()
+                        .collect::<Vec<Probability<i32>>>()
                 })
                 .collect(),
         ))
@@ -140,7 +140,7 @@ impl ProbabilityDistribution for Die {
         )
     }
 
-    fn iter(&self) -> ProbabilityIter {
+    fn iter(&self) -> ProbabilityIter<i32> {
         ProbabilityIter::new(&self.probabilities)
     }
 

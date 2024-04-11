@@ -1,16 +1,16 @@
-use crate::{die::Die, probability::Probability};
+use crate::probability::Probability;
 
-pub trait ProbabilityDistribution {
-    fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution) -> Die;
-    fn add_dependent<F>(&self, callback_fn: &F) -> Die
+pub trait ProbabilityDistribution<T> {
+    fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution<T>) -> Self;
+    fn add_dependent<F>(&self, callback_fn: &F) -> Self
     where
-        F: Fn(&i32) -> Die;
-    fn conditional_chain<F>(&self, callback_fn: &F) -> Die
+        F: Fn(&i32) -> Self;
+    fn conditional_chain<F>(&self, callback_fn: &F) -> Self
     where
-        F: Fn(&i32) -> Die;
-    fn add_flat(&self, flat_increase: i32) -> Die;
-    fn get_probabilities(&self) -> &Vec<Probability>;
-    fn iter(&self) -> ProbabilityIter;
+        F: Fn(&i32) -> Self;
+    fn add_flat(&self, flat_increase: i32) -> Self;
+    fn get_probabilities(&self) -> &Vec<Probability<T>>;
+    fn iter(&self) -> ProbabilityIter<T>;
     fn get_results(&self) -> String;
     fn get_details(&self) -> String;
     fn get_min(&self) -> i32;
@@ -20,13 +20,13 @@ pub trait ProbabilityDistribution {
     fn get_mean(&self) -> f64;
 }
 
-pub struct ProbabilityIter<'a> {
-    values: &'a Vec<Probability>,
+pub struct ProbabilityIter<'a, T> {
+    values: &'a Vec<Probability<T>>,
     index: usize,
 }
 
-impl<'a> ProbabilityIter<'a> {
-    pub fn new(probabilities: &'a Vec<Probability>) -> Self {
+impl<'a, T> ProbabilityIter<'a, T> {
+    pub fn new(probabilities: &'a Vec<Probability<T>>) -> Self {
         ProbabilityIter {
             values: probabilities,
             index: 0,
@@ -34,8 +34,8 @@ impl<'a> ProbabilityIter<'a> {
     }
 }
 
-impl<'a> Iterator for ProbabilityIter<'a> {
-    type Item = &'a Probability;
+impl<'a, T> Iterator for ProbabilityIter<'a, T> {
+    type Item = &'a Probability<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         return if self.index < self.values.len() {

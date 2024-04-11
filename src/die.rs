@@ -6,11 +6,6 @@ use core::ops::Add;
 #[derive(Debug, Clone)]
 pub struct Die {
     probabilities: Vec<Probability>,
-    min: i32,
-    max: i32,
-    variance: f64,
-    standard_deviation: f64,
-    mean: f64,
 }
 
 impl Die {
@@ -41,18 +36,8 @@ impl Die {
         if probabilities.is_empty() {
             return Die::empty();
         }
-        let min = probabilities.iter().min().unwrap().value.clone();
-        let max = probabilities.iter().max().unwrap().value.clone();
-        let variance = calc_variance(&probabilities);
-        let standard_deviation = calc_standard_deviation(&probabilities);
-        let mean = calc_mean(&probabilities);
         Die {
             probabilities: compress_additive(&probabilities),
-            min,
-            max,
-            variance,
-            standard_deviation,
-            mean,
         }
     }
 
@@ -62,11 +47,6 @@ impl Die {
                 value: 0,
                 chance: 1.0,
             }],
-            min: 0,
-            max: 0,
-            variance: 0 as f64,
-            standard_deviation: 0 as f64,
-            mean: 0 as f64,
         }
     }
 }
@@ -76,24 +56,24 @@ impl ProbabilityDistribution for Die {
         &self.probabilities
     }
 
-    fn get_min(&self) -> &i32 {
-        &self.min
+    fn get_min(&self) -> i32 {
+        self.get_probabilities().iter().min().unwrap().value
     }
 
-    fn get_max(&self) -> &i32 {
-        &self.max
+    fn get_max(&self) -> i32 {
+        self.get_probabilities().iter().max().unwrap().value
     }
 
-    fn get_mean(&self) -> &f64 {
-        &self.mean
+    fn get_mean(&self) -> f64 {
+        calc_mean(&self.get_probabilities())
     }
 
-    fn get_variance(&self) -> &f64 {
-        &self.variance
+    fn get_variance(&self) -> f64 {
+        calc_variance(&self.get_probabilities())
     }
 
-    fn get_standard_deviation(&self) -> &f64 {
-        &self.standard_deviation
+    fn get_standard_deviation(&self) -> f64 {
+        calc_standard_deviation(&self.get_probabilities())
     }
 
     fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution) -> Die {
@@ -179,15 +159,15 @@ impl ProbabilityDistribution for Die {
                 {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\
                 ",
             "Min",
-            self.min,
+            self.get_min(),
             "Max",
-            self.max,
+            self.get_max(),
             "Mean",
-            self.mean,
+            self.get_mean(),
             "Variance",
-            self.variance,
+            self.get_variance(),
             "Standard Deviation",
-            self.standard_deviation
+            self.get_standard_deviation()
         )
     }
 }

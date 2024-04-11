@@ -13,11 +13,11 @@ pub trait ProbabilityDistribution {
     fn iter(&self) -> ProbabilityIter;
     fn get_results(&self) -> String;
     fn get_details(&self) -> String;
-    fn get_min(&self) -> &i32;
-    fn get_max(&self) -> &i32;
-    fn get_variance(&self) -> &f64;
-    fn get_standard_deviation(&self) -> &f64;
-    fn get_mean(&self) -> &f64;
+    fn get_min(&self) -> i32;
+    fn get_max(&self) -> i32;
+    fn get_variance(&self) -> f64;
+    fn get_standard_deviation(&self) -> f64;
+    fn get_mean(&self) -> f64;
 }
 
 pub struct ProbabilityIter<'a> {

@@ -148,7 +148,7 @@ impl std::fmt::Display for Probability {
             f,
             "{:>NUMBER_FORMAT$} : {:>NUMBER_FORMAT$.DECIMAL_FORMAT$} : {:-<BAR_LENGTH$}",
             self.value,
-            self.chance,
+            self.chance * 100.0,
             "#".repeat((self.chance * BAR_LENGTH as f64).floor() as usize)
         )
     }
@@ -256,33 +256,31 @@ impl ProbabilityDistribution for Die {
     }
 
     fn get_details(&self) -> String {
-        format!("{}", self)
+        format!(
+            "\
+                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\
+                ",
+            "Min",
+            self.min,
+            "Max",
+            self.max,
+            "Mean",
+            self.mean,
+            "Variance",
+            self.variance,
+            "Standard Deviation",
+            self.standard_deviation
+        )
     }
 }
 
 impl std::fmt::Display for Die {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "\
-            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$}\n\
-            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$}\n\
-            \n\
-            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
-            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
-            {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\
-            ",
-            "Min",
-            self.min,
-            "Max",
-            self.max,
-            "Variance",
-            self.variance,
-            "Standard Deviation",
-            self.standard_deviation,
-            "Mean",
-            self.mean,
-        )
+        write!(f, "{}", self.get_results())
     }
 }
 

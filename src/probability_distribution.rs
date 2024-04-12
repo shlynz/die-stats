@@ -38,12 +38,12 @@ impl<'a, T> Iterator for ProbabilityIter<'a, T> {
     type Item = &'a Probability<T>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        return if self.index < self.values.len() {
+        if self.index < self.values.len() {
             let result = Some(&self.values[self.index]);
             self.index += 1;
             result
         } else {
             None
-        };
+        }
     }
 }

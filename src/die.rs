@@ -2,6 +2,7 @@ use crate::common::*;
 use crate::probability::Probability;
 use crate::probability_distribution::{ProbabilityDistribution, ProbabilityIter};
 use core::ops::Add;
+use std::fmt::Write;
 
 #[derive(Debug, Clone)]
 pub struct Die {
@@ -65,15 +66,15 @@ impl ProbabilityDistribution<i32> for Die {
     }
 
     fn get_mean(&self) -> f64 {
-        calc_mean(&self.get_probabilities())
+        calc_mean(self.get_probabilities())
     }
 
     fn get_variance(&self) -> f64 {
-        calc_variance(&self.get_probabilities())
+        calc_variance(self.get_probabilities())
     }
 
     fn get_standard_deviation(&self) -> f64 {
-        calc_standard_deviation(&self.get_probabilities())
+        calc_standard_deviation(self.get_probabilities())
     }
 
     fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution<i32>) -> Die {
@@ -113,9 +114,8 @@ impl ProbabilityDistribution<i32> for Die {
     where
         F: Fn(&i32) -> Die,
     {
-        Die::from_probabilities(compress_additive(
-            &self
-                .get_probabilities()
+        Die::from_probabilities(
+            self.get_probabilities()
                 .iter()
                 .flat_map(|outer_prob| {
                     callback_fn(&outer_prob.value)
@@ -124,8 +124,8 @@ impl ProbabilityDistribution<i32> for Die {
                         .map(|inner_prob| *inner_prob * outer_prob.chance)
                         .collect::<Vec<Probability<i32>>>()
                 })
-                .collect(),
-        ))
+                .collect::<Vec<Probability<i32>>>(),
+        )
     }
 
     fn add_flat(&self, flat_increase: i32) -> Die {
@@ -146,7 +146,10 @@ impl ProbabilityDistribution<i32> for Die {
 
     fn get_results(&self) -> String {
         // TODO get rid of newline at end
-        self.iter().map(|prob| format!("{prob}\n")).collect()
+        self.iter().fold(String::new(), |mut out, prob| {
+            let _ = writeln!(out, "{prob}");
+            out
+        })
     }
 
     fn get_details(&self) -> String {

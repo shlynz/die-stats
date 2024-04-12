@@ -6,7 +6,7 @@ pub const NUMBER_FORMAT: usize = 10;
 pub const DECIMAL_FORMAT: usize = 3;
 pub const BAR_LENGTH: usize = 50;
 
-pub fn values_to_probabilities<T>(values: &Vec<T>) -> Vec<Probability<T>>
+pub fn values_to_probabilities<T>(values: &[T]) -> Vec<Probability<T>>
 where
     T: Copy,
 {
@@ -20,7 +20,7 @@ where
         .collect()
 }
 
-pub fn calc_mean<T>(values: &Vec<Probability<T>>) -> f64
+pub fn calc_mean<T>(values: &[Probability<T>]) -> f64
 where
     f64: From<T>,
     T: Copy,
@@ -30,26 +30,26 @@ where
         .fold(0.0, |acc, prob| acc + prob.chance * f64::from(prob.value))
 }
 
-pub fn calc_variance<T>(values: &Vec<Probability<T>>) -> f64
+pub fn calc_variance<T>(values: &[Probability<T>]) -> f64
 where
     f64: From<T>,
     T: std::ops::Mul<Output = T> + Copy,
 {
-    let mean = calc_mean(&values);
+    let mean = calc_mean(values);
     values.iter().fold(0.0, |acc, prob| {
         acc + prob.chance * f64::from(prob.value * prob.value)
     }) - (mean * mean)
 }
 
-pub fn calc_standard_deviation<T>(values: &Vec<Probability<T>>) -> f64
+pub fn calc_standard_deviation<T>(values: &[Probability<T>]) -> f64
 where
     f64: From<T>,
     T: std::ops::Mul<Output = T> + Copy,
 {
-    calc_variance(&values).sqrt()
+    calc_variance(values).sqrt()
 }
 
-pub fn compress_additive<T>(values: &Vec<Probability<T>>) -> Vec<Probability<T>>
+pub fn compress_additive<T>(values: &[Probability<T>]) -> Vec<Probability<T>>
 where
     Probability<T>: Ord,
     T: std::cmp::Eq + std::hash::Hash + Copy,

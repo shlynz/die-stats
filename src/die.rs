@@ -25,12 +25,12 @@ impl Die {
         if end - start == 0 {
             Die::empty()
         } else {
-            Die::from_values((start..=end).collect::<Vec<i32>>())
+            Die::from_values(&(start..=end).collect::<Vec<i32>>())
         }
     }
 
-    pub fn from_values(values: Vec<i32>) -> Die {
-        Die::from_probabilities(values_to_probabilities(&values))
+    pub fn from_values(values: &[i32]) -> Die {
+        Die::from_probabilities(values_to_probabilities(values))
     }
 
     pub fn from_probabilities(probabilities: Vec<Probability<i32>>) -> Self {

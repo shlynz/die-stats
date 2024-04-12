@@ -194,6 +194,22 @@ impl Add<Die> for Die {
     }
 }
 
+impl Add<i32> for Die {
+    type Output = Die;
+
+    fn add(self, rhs: i32) -> Self::Output {
+        self.add_flat(rhs)
+    }
+}
+
+impl<'a> Add<i32> for &'a Die {
+    type Output = Die;
+
+    fn add(self, rhs: i32) -> Self::Output {
+        self.add_flat(rhs)
+    }
+}
+
 impl<'a, F> Add<&'a F> for &'a Die
 where
     F: Fn(&i32) -> Die,
@@ -213,5 +229,155 @@ where
 
     fn add(self, rhs: F) -> Self::Output {
         self.add_dependent(&rhs)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn initializers() {
+        let expected_probabilities = vec![
+            Probability {
+                value: 1,
+                chance: 0.5,
+            },
+            Probability {
+                value: 2,
+                chance: 0.5,
+            },
+        ];
+        assert_eq!(*Die::new(2).get_probabilities(), expected_probabilities);
+        assert_eq!(
+            Die::from_values(vec![1, 2]).get_probabilities(),
+            &expected_probabilities
+        );
+        assert_eq!(
+            Die::from_probabilities(expected_probabilities.clone()).get_probabilities(),
+            &expected_probabilities
+        );
+        assert_eq!(
+            Die::from_range(1, 2).get_probabilities(),
+            &expected_probabilities
+        );
+        assert_eq!(
+            *Die::empty().get_probabilities(),
+            vec![Probability {
+                value: 0,
+                chance: 1.0
+            }]
+        )
+    }
+
+    #[test]
+    fn mean_calculation() {
+        assert_eq!(Die::new(6).get_mean(), 3.5)
+    }
+
+    #[test]
+    fn variance_calculation() {
+        assert_eq!(Die::new(6).get_variance(), 2.916666666666666)
+    }
+
+    #[test]
+    fn standard_deviation_calculation() {
+        assert_eq!(Die::new(6).get_standard_deviation(), 1.707825127659933)
+    }
+
+    #[test]
+    fn min() {
+        assert_eq!((Die::new(2) + Die::from_values(vec![3, 4, 5])).get_min(), 4)
+    }
+
+    #[test]
+    fn max() {
+        assert_eq!((Die::new(2) + Die::from_values(vec![3, 4, 5])).get_max(), 7)
+    }
+
+    #[test]
+    fn adding() {
+        assert_eq!(
+            *(Die::new(2) + Die::new(2)).get_probabilities(),
+            vec![
+                Probability {
+                    value: 2,
+                    chance: 0.25
+                },
+                Probability {
+                    value: 3,
+                    chance: 0.5
+                },
+                Probability {
+                    value: 4,
+                    chance: 0.25
+                },
+            ]
+        )
+    }
+
+    #[test]
+    fn adding_dependent() {
+        assert_eq!(
+            *(Die::new(2) + &|&prob: &_| if prob == 2 { Die::new(2) } else { Die::new(0) })
+                .get_probabilities(),
+            vec![
+                Probability {
+                    value: 1,
+                    chance: 0.5
+                },
+                Probability {
+                    value: 3,
+                    chance: 0.25
+                },
+                Probability {
+                    value: 4,
+                    chance: 0.25
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn chaining_dice() {
+        assert_eq!(
+            *(Die::new(2).conditional_chain(&|&prob| if prob == 1 {
+                Die::new(2)
+            } else {
+                Die::new(3)
+            }))
+            .get_probabilities(),
+            vec![
+                Probability {
+                    value: 1,
+                    chance: 0.41666666666666663
+                },
+                Probability {
+                    value: 2,
+                    chance: 0.41666666666666663
+                },
+                Probability {
+                    value: 3,
+                    chance: 0.16666666666666666
+                }
+            ]
+        )
+    }
+
+    #[test]
+    fn adding_flat() {
+        assert_eq!(
+            *(Die::new(2) + 1).get_probabilities(),
+            vec![
+                Probability {
+                    value: 2,
+                    chance: 0.5,
+                },
+                Probability {
+                    value: 3,
+                    chance: 0.5,
+                }
+            ]
+        )
     }
 }

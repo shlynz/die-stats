@@ -62,3 +62,39 @@ impl std::fmt::Display for Probability<i32> {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn adding() {
+        assert_eq!(
+            Probability {
+                value: 1,
+                chance: 0.2
+            } + Probability {
+                value: 2,
+                chance: 0.05
+            },
+            Probability {
+                value: 3,
+                chance: 0.01
+            }
+        )
+    }
+
+    #[test]
+    fn multiplying() {
+        assert_eq!(
+            Probability {
+                value: 1,
+                chance: 0.2
+            } * 0.05,
+            Probability {
+                value: 1,
+                chance: 0.01
+            }
+        )
+    }
+}

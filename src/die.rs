@@ -253,7 +253,7 @@ mod tests {
         ];
         assert_eq!(*Die::new(2).get_probabilities(), expected_probabilities);
         assert_eq!(
-            Die::from_values(vec![1, 2]).get_probabilities(),
+            Die::from_values(&vec![1, 2]).get_probabilities(),
             &expected_probabilities
         );
         assert_eq!(
@@ -290,12 +290,18 @@ mod tests {
 
     #[test]
     fn min() {
-        assert_eq!((Die::new(2) + Die::from_values(vec![3, 4, 5])).get_min(), 4)
+        assert_eq!(
+            (Die::new(2) + Die::from_values(&vec![3, 4, 5])).get_min(),
+            4
+        )
     }
 
     #[test]
     fn max() {
-        assert_eq!((Die::new(2) + Die::from_values(vec![3, 4, 5])).get_max(), 7)
+        assert_eq!(
+            (Die::new(2) + Die::from_values(&vec![3, 4, 5])).get_max(),
+            7
+        )
     }
 
     #[test]

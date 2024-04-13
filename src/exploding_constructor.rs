@@ -1,4 +1,4 @@
-use super::*;
+use crate::{Die, Probability};
 
 pub trait ExplodingConstructor<V, P> {
     fn new_exploding(sides: V, exploding_range: V, exploding_die: P) -> P;
@@ -44,4 +44,39 @@ fn exploding_die_helper(exploding_range: i32, exploding_die: Die) -> Box<dyn Fn(
     })
 }
 
-// TODO tests
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Die, ProbabilityDistribution};
+
+    #[test]
+    fn exploding_constructor() {
+        let expected_probabilities = vec![
+            Probability {
+                value: 2,
+                chance: 0.75,
+            },
+            Probability {
+                value: 3,
+                chance: 0.25,
+            },
+        ];
+        assert_eq!(
+            *Die::new_exploding(2, 1, Die::new(2)).get_probabilities(),
+            expected_probabilities
+        );
+        assert_eq!(
+            Die::exploding_from_values(&vec![1, 2], 1, Die::new(2)).get_probabilities(),
+            &expected_probabilities
+        );
+        assert_eq!(
+            Die::exploding_from_probabilities(expected_probabilities.clone(), 1, Die::new(2))
+                .get_probabilities(),
+            &expected_probabilities
+        );
+        assert_eq!(
+            Die::exploding_from_range(1, 2, 1, Die::new(2)).get_probabilities(),
+            &expected_probabilities
+        );
+    }
+}

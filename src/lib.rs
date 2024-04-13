@@ -7,8 +7,8 @@ pub use crate::{
 };
 
 mod common;
-pub mod dice_pool;
-pub mod die;
-pub mod exploding_constructor;
-pub mod probability;
-pub mod probability_distribution;
+mod dice_pool;
+mod die;
+mod exploding_constructor;
+mod probability;
+mod probability_distribution;

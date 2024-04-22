@@ -1,7 +1,7 @@
 pub use crate::{
     die::Die,
-    drop_constructor::DropConstructor,
-    exploding_constructor::ExplodingConstructor,
+    drop_constructor::{DropConstructor, DropType},
+    exploding_constructor::{ExplodingCondition, ExplodingConstructor},
     probability::Probability,
     probability_distribution::{ProbabilityDistribution, ProbabilityIter},
 };

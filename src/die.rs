@@ -235,6 +235,14 @@ where
     }
 }
 
+impl PartialEq for Die {
+    fn eq(&self, other: &Self) -> bool {
+        self.get_probabilities() == other.get_probabilities()
+    }
+}
+
+impl Eq for Die {}
+
 #[cfg(test)]
 mod tests {
     use super::*;

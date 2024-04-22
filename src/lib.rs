@@ -1,14 +1,14 @@
 pub use crate::{
-    dice_pool::DicePool,
     die::Die,
+    drop_constructor::DropConstructor,
     exploding_constructor::ExplodingConstructor,
     probability::Probability,
     probability_distribution::{ProbabilityDistribution, ProbabilityIter},
 };
 
 mod common;
-mod dice_pool;
 mod die;
+mod drop_constructor;
 mod exploding_constructor;
 mod probability;
 mod probability_distribution;

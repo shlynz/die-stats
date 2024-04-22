@@ -31,13 +31,16 @@ impl Mul<f64> for Probability<i32> {
     }
 }
 
-impl PartialEq for Probability<i32> {
+impl<T> PartialEq for Probability<T>
+where
+    T: PartialEq,
+{
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value
     }
 }
 
-impl Eq for Probability<i32> {}
+impl<T> Eq for Probability<T> where T: PartialEq {}
 
 impl PartialOrd for Probability<i32> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {

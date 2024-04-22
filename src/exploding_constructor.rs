@@ -88,12 +88,12 @@ fn exploding_die_helper(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Die, ProbabilityDistribution};
+    use crate::Die;
     use std::cmp::Ordering;
 
     #[test]
     fn exploding_constructor() {
-        let expected_probabilities = vec![
+        let expected_probabilities = Die::from_probabilities(vec![
             Probability {
                 value: 2,
                 chance: 0.75,
@@ -102,29 +102,36 @@ mod tests {
                 value: 3,
                 chance: 0.25,
             },
-        ];
+        ]);
         assert_eq!(
-            *Die::new_exploding(2, 2, Ordering::Less, Die::new(2)).get_probabilities(),
+            Die::new_exploding(2, 2, Ordering::Less, Die::new(2)),
             expected_probabilities
         );
         assert_eq!(
-            Die::exploding_from_values(&vec![1, 2], 2, Ordering::Less, Die::new(2))
-                .get_probabilities(),
-            &expected_probabilities
+            Die::exploding_from_values(&vec![1, 2], 2, Ordering::Less, Die::new(2)),
+            expected_probabilities
         );
         assert_eq!(
             Die::exploding_from_probabilities(
-                expected_probabilities.clone(),
+                vec![
+                    Probability {
+                        value: 1,
+                        chance: 0.5,
+                    },
+                    Probability {
+                        value: 2,
+                        chance: 0.5,
+                    }
+                ],
                 2,
                 Ordering::Less,
                 Die::new(2)
-            )
-            .get_probabilities(),
-            &expected_probabilities
+            ),
+            expected_probabilities
         );
         assert_eq!(
-            Die::exploding_from_range(1, 2, 2, Ordering::Less, Die::new(2)).get_probabilities(),
-            &expected_probabilities
+            Die::exploding_from_range(1, 2, 2, Ordering::Less, Die::new(2)),
+            expected_probabilities
         );
     }
 }

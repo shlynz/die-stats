@@ -5,8 +5,8 @@ pub enum DropType {
     Low,
 }
 
-pub trait DropConstructor<V, P> {
-    fn new_drop(sides: V, roll_amount: usize, drop_amount: V, drop_condition: DropType) -> P;
+pub trait DropInitializer<V, P> {
+    fn new_drop(amount: V, roll_amount: usize, drop_amount: V, drop_condition: DropType) -> P;
     fn drop_from_range(
         start: V,
         end: V,
@@ -97,7 +97,7 @@ fn drop_by_condition(dice: &[Die], drop_condition: DropType, drop_amount: i32) -
     )
 }
 
-impl DropConstructor<i32, Die> for Die {
+impl DropInitializer<i32, Die> for Die {
     fn new_drop(sides: i32, roll_amount: usize, drop_amount: i32, drop_condition: DropType) -> Die {
         drop_by_condition(
             &vec![Die::new(sides); roll_amount],
@@ -240,7 +240,7 @@ mod tests {
     }
 
     #[test]
-    fn drop_constructors() {
+    fn drop_initializers() {
         let expected_output = Die::from_probabilities(vec![
             Probability {
                 value: 2,

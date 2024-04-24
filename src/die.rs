@@ -19,13 +19,10 @@ impl Die {
     }
 
     pub fn from_range(start: i32, end: i32) -> Die {
-        if end < start {
-            panic!("Can't create a Die with the given parameters");
-        }
-        if end - start == 0 {
-            Die::empty()
-        } else {
-            Die::from_values(&(start..=end).collect::<Vec<i32>>())
+        match end.cmp(&start) {
+            std::cmp::Ordering::Less => Die::from_range(end, start),
+            std::cmp::Ordering::Equal => Die::empty(),
+            std::cmp::Ordering::Greater => Die::from_values(&(start..=end).collect::<Vec<i32>>()),
         }
     }
 
@@ -259,25 +256,19 @@ mod tests {
                 chance: 0.5,
             },
         ];
-        assert_eq!(*Die::new(2).get_probabilities(), expected_probabilities);
+        let expected_die = Die::from_probabilities(expected_probabilities.clone());
+        // baseline test for other initializers
+        assert_eq!(expected_die.get_probabilities(), &expected_probabilities);
+        // other initializers
+        assert_eq!(Die::new(2), expected_die);
+        assert_eq!(Die::from_values(&vec![1, 2]), expected_die);
+        assert_eq!(Die::from_range(1, 2), expected_die);
         assert_eq!(
-            Die::from_values(&vec![1, 2]).get_probabilities(),
-            &expected_probabilities
-        );
-        assert_eq!(
-            Die::from_probabilities(expected_probabilities.clone()).get_probabilities(),
-            &expected_probabilities
-        );
-        assert_eq!(
-            Die::from_range(1, 2).get_probabilities(),
-            &expected_probabilities
-        );
-        assert_eq!(
-            *Die::empty().get_probabilities(),
-            vec![Probability {
+            Die::empty(),
+            Die::from_probabilities(vec![Probability {
                 value: 0,
                 chance: 1.0
-            }]
+            }])
         )
     }
 

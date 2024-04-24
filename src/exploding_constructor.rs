@@ -8,9 +8,9 @@ pub enum ExplodingCondition {
     Greater,
 }
 
-pub trait ExplodingConstructor<V, P> {
+pub trait ExplodingInitializer<V, P> {
     fn new_exploding(
-        sides: V,
+        amount: V,
         exploding_range: V,
         exploding_condition: ExplodingCondition,
         exploding_die: P,
@@ -36,7 +36,7 @@ pub trait ExplodingConstructor<V, P> {
     ) -> P;
 }
 
-impl ExplodingConstructor<i32, Die> for Die {
+impl ExplodingInitializer<i32, Die> for Die {
     fn new_exploding(
         sides: i32,
         exploding_range: i32,
@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[test]
-    fn exploding_constructor() {
+    fn exploding_initializer() {
         let expected_probabilities = Die::from_probabilities(vec![
             Probability {
                 value: 2,

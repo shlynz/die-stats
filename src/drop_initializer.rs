@@ -33,7 +33,7 @@ fn prep_dice(dice: &[Die]) -> Vec<(Vec<i32>, f64)> {
         let first: Vec<Vec<Probability<i32>>> = first
             .get_probabilities()
             .iter()
-            .map(|val| vec![val.clone()])
+            .map(|val| vec![*val])
             .collect();
         dice[1..]
             .iter()
@@ -44,7 +44,7 @@ fn prep_dice(dice: &[Die]) -> Vec<(Vec<i32>, f64)> {
                             .iter()
                             .map(|val_to_add| {
                                 let mut new_v1 = prev_val.clone();
-                                new_v1.push(val_to_add.clone());
+                                new_v1.push(*val_to_add);
                                 new_v1
                             })
                             .collect::<Vec<_>>()

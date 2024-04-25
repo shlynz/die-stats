@@ -21,8 +21,7 @@ impl Die {
     pub fn from_range(start: i32, end: i32) -> Die {
         match end.cmp(&start) {
             std::cmp::Ordering::Less => Die::from_range(end, start),
-            std::cmp::Ordering::Equal => Die::empty(),
-            std::cmp::Ordering::Greater => Die::from_values(&(start..=end).collect::<Vec<i32>>()),
+            _ => Die::from_values(&(start..=end).collect::<Vec<i32>>()),
         }
     }
 

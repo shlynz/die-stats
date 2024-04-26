@@ -3,9 +3,26 @@ use core::cmp::Ordering;
 
 use core::ops::{Add, Mul};
 
+/// Represents one outcome of a probability distribution.
+///
+/// Holds one value, and the chance for that value to appear.
+///
+/// # Examples
+/// ```
+/// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+/// # let coin = Die::new(2);
+/// assert_eq!(
+///     coin.get_probabilities(),
+///     &vec![
+///         Probability { value: 1, chance: 0.5 },
+///         Probability { value: 2, chance: 0.5 },
+///     ]);
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Probability<T> {
+    /// Assosiated value of this probability
     pub value: T,
+    /// Odds of assosiated value happening
     pub chance: f64,
 }
 

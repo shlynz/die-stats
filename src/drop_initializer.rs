@@ -1,12 +1,19 @@
 use crate::{Die, Probability, ProbabilityDistribution};
 
+/// Used to determine what to drop.
 pub enum DropType {
+    /// Used to start dropping from the highest.
     High,
+    /// Used to start dropping from the lowest.
     Low,
 }
 
+/// Initializers for dropping `n` results from the evaluated pool of [probability
+/// distributions][`ProbabilityDistribution`].
 pub trait DropInitializer<V, P> {
+    /// Initializes a new `P` and drops `roll_amount` from the specified end.
     fn new_drop(amount: V, roll_amount: usize, drop_amount: V, drop_condition: DropType) -> P;
+    /// Initializes a new `P` from a given range and drops `roll_amount` from the specified end.
     fn drop_from_range(
         start: V,
         end: V,
@@ -14,12 +21,14 @@ pub trait DropInitializer<V, P> {
         drop_amount: V,
         drop_condition: DropType,
     ) -> P;
+    /// Initializes a new `P` from given values and drops `roll_amount` from the specified end.
     fn drop_from_values(
         values: &[V],
         roll_amount: usize,
         drop_amount: V,
         drop_condition: DropType,
     ) -> P;
+    /// Initializes a new `P` from given [probabilities][`Probability`] and drops `roll_amount` from the specified end.
     fn drop_from_probabilities(
         probabilities: Vec<Probability<V>>,
         roll_amount: usize,

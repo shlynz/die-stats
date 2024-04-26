@@ -1,20 +1,29 @@
 use crate::{Die, Probability};
 
+/// Used to determine the fuse.
 pub enum ExplodingCondition {
+    /// Explodes on everything lower than given value.
     Lower,
+    /// Explodes on everything lower or equals than given value.
     LowerOrEqual,
+    /// Explodes on everything equals than given value.
     Equal,
+    /// Explodes on everything greater or equals than given value.
     GreaterOrEqual,
+    /// Explodes on everything greater than given value.
     Greater,
 }
 
+/// Initializers for "exploding" a [probability distribution][`crate::ProbabilityDistribution`] on a given condition.
 pub trait ExplodingInitializer<V, P> {
+    /// Initializes a new `P` and explodes on given condition.
     fn new_exploding(
         amount: V,
         exploding_range: V,
         exploding_condition: ExplodingCondition,
         exploding_die: P,
     ) -> P;
+    /// Initializes a new `P` from given range and explodes on given condition.
     fn exploding_from_range(
         start: V,
         end: V,
@@ -22,12 +31,14 @@ pub trait ExplodingInitializer<V, P> {
         exploding_condition: ExplodingCondition,
         exploding_die: P,
     ) -> P;
+    /// Initializes a new `P` from given values and explodes on given condition.
     fn exploding_from_values(
         values: &[V],
         exploding_range: V,
         exploding_condition: ExplodingCondition,
         exploding_die: P,
     ) -> P;
+    /// Initializes a new `P` from given [probabilities][`Probability`] and explodes on given condition.
     fn exploding_from_probabilities(
         probabilities: Vec<Probability<V>>,
         exploding_range: V,

@@ -1,5 +1,7 @@
 use crate::probability::Probability;
 
+/// Base structure for mutating and evaluating different types of collections of
+/// [probabilities][`Probability`].
 pub trait ProbabilityDistribution<T> {
     fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution<T>) -> Self;
     fn add_dependent<F>(&self, callback_fn: &F) -> Self
@@ -20,6 +22,7 @@ pub trait ProbabilityDistribution<T> {
     fn get_mean(&self) -> f64;
 }
 
+/// Iterator over a list of probabilities.
 pub struct ProbabilityIter<'a, T> {
     values: &'a Vec<Probability<T>>,
     index: usize,

@@ -4,13 +4,82 @@ use crate::probability_distribution::{ProbabilityDistribution, ProbabilityIter};
 use core::ops::Add;
 use std::fmt::Write;
 
+/// A representation of a die, using the provided initializers.
+///
+/// Can provide various stats via the implemented [probability distribution][`ProbabilityDistribution`] trait
+/// and is already implementing both other special initializing traits, [exploding][`crate::ExplodingInitializer`]
+/// and [roll x keep n][`crate::DropInitializer`].
+///
+/// # Examples
+/// ```
+/// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+/// let d2 = Die::new(2);
+/// assert_eq!(
+///     d2.get_probabilities(),
+///     &vec![
+///         Probability { value: 1, chance: 0.5 },
+///         Probability { value: 2, chance: 0.5 }
+///     ]);
+/// ```
+///
+/// # Examples: Special/Empty die
+/// ```
+/// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+/// let d0 = Die::empty();
+/// assert_eq!(
+///     d0.get_probabilities(),
+///     &vec![ Probability { value: 0, chance: 1.0 } ]
+/// );
+/// ```
+///
+/// # Examples: Other initializers
+/// Sometimes another form of die is needed, that for example doesn't start at 1 or isn't
+/// continuous.
+/// ```
+/// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+/// let d2 = Die::from_range(1, 2);
+/// assert_eq!(d2, Die::new(2));
+///
+/// let d2 = Die::from_values(&vec![1, 2]);
+/// assert_eq!(d2, Die::new(2));
+///
+/// let probabilities = vec![
+///     Probability { value: 1, chance: 0.5 },
+///     Probability { value: 2, chance: 0.5 },
+/// ];
+/// let d2 = Die::from_probabilities(probabilities);
+/// assert_eq!(d2, Die::new(2));
+/// ```
 #[derive(Debug, Clone)]
 pub struct Die {
     probabilities: Vec<Probability<i32>>,
 }
 
 impl Die {
+    /// Creates a new die with the given amount of sides, starting from 1 and probabilities are evenly
+    /// distributed.
+    ///
+    /// When given `0`, creates an [empty die][`Die::empty`].
+    ///
+    /// # Errors
+    /// TODO
+    ///
+    /// # Example
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// let d4 = Die::new(4);
+    /// assert_eq!(
+    ///     d4.get_probabilities(),
+    ///     &vec![
+    ///         Probability { value: 1, chance: 0.25 },
+    ///         Probability { value: 2, chance: 0.25 },
+    ///         Probability { value: 3, chance: 0.25 },
+    ///         Probability { value: 4, chance: 0.25 },
+    ///     ]);
+    /// ```
     pub fn new(sides: i32) -> Die {
+        // TODO make it save to take negative numbers
+        // generate them, but negative; -3 => die of -1, -2, -3
         if sides == 0 {
             Die::empty()
         } else {
@@ -18,6 +87,30 @@ impl Die {
         }
     }
 
+    /// Creates a new die with continuous values between and including start to end, probabilities
+    /// are evenly distributed.
+    ///
+    /// When given `0`, creates an [empty die][`Die::empty()`].
+    ///
+    /// # Examples
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// let d4_minus_2 = Die::from_range(-1, 2);
+    /// assert_eq!(
+    ///     d4_minus_2.get_probabilities(),
+    ///     &vec![
+    ///         Probability { value: -1, chance: 0.25 },
+    ///         Probability { value:  0, chance: 0.25 },
+    ///         Probability { value:  1, chance: 0.25 },
+    ///         Probability { value:  2, chance: 0.25 },
+    ///     ]);
+    ///
+    /// let d6 = Die::from_range(1, 6);
+    /// assert_eq!(
+    ///     d6,
+    ///     Die::new(6)
+    /// );
+    /// ```
     pub fn from_range(start: i32, end: i32) -> Die {
         match end.cmp(&start) {
             std::cmp::Ordering::Less => Die::from_range(end, start),
@@ -25,10 +118,60 @@ impl Die {
         }
     }
 
+    /// Creates a new die from the given values, probabilities are evenly distributed.
+    /// Compresses values if given duplicates.
+    ///
+    /// When given `0`, creates an [empty die][`Die::empty()`].
+    ///
+    /// # Examples
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// let d4 = Die::from_values(&vec![1,2,3,4]);
+    /// assert_eq!(
+    ///     d4.get_probabilities(),
+    ///     &vec![
+    ///         Probability { value: 1, chance: 0.25 },
+    ///         Probability { value: 2, chance: 0.25 },
+    ///         Probability { value: 3, chance: 0.25 },
+    ///         Probability { value: 4, chance: 0.25 },
+    ///     ]
+    /// );
+    ///
+    /// let skewed_die = Die::from_values(&vec![1,2,4,4]);
+    /// assert_eq!(
+    ///     skewed_die.get_probabilities(),
+    ///     &vec![
+    ///         Probability { value: 1, chance: 0.25 },
+    ///         Probability { value: 2, chance: 0.25 },
+    ///         Probability { value: 4, chance: 0.5 },
+    ///     ]
+    /// );
+    /// ```
     pub fn from_values(values: &[i32]) -> Die {
         Die::from_probabilities(values_to_probabilities(values))
     }
 
+    /// Creates a new die with the given [probabilities][`Probability<i32>`].
+    ///
+    /// When given `0`, creates an [empty die][`Die::empty()`].
+    ///
+    /// # Examples
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// let weighted_d4 = Die::from_probabilities(
+    ///     vec![
+    ///         Probability { value: 1, chance: 0.1 },
+    ///         Probability { value: 2, chance: 0.1 },
+    ///         Probability { value: 3, chance: 0.1 },
+    ///         Probability { value: 4, chance: 0.7 },
+    ///     ]
+    /// );
+    ///
+    /// assert_eq!(
+    ///     weighted_d4,
+    ///     Die::from_values(&vec![1,2,3,4,4,4,4,4,4,4])
+    /// );
+    /// ```
     pub fn from_probabilities(probabilities: Vec<Probability<i32>>) -> Self {
         if probabilities.is_empty() {
             return Die::empty();
@@ -38,6 +181,40 @@ impl Die {
         }
     }
 
+    /// Creates a new, special, empty die with only one value, `0` with a chance of `1.0`.
+    ///
+    /// Can be used to return nothing for specific values when adding or chaining conditionally.
+    ///
+    /// # Examples
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// assert_eq!(
+    ///     Die::empty().get_probabilities(),
+    ///     &vec![Probability { value: 0, chance: 1.0 }]
+    /// );
+    /// ```
+    /// # Example: Use case getting average damage
+    /// Calculating the average damage of a level 1 rogue with 16 dex, attacking a target with AC of 16, using a dagger.
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// let proficiency_bonus = 2;
+    /// let dex_modifier = 3;
+    /// let attack = Die::new(20) + proficiency_bonus + dex_modifier;
+    /// let armor_class = 16;
+    /// let damage = attack.conditional_chain(&|&attack_result| {
+    ///     if attack_result >= armor_class {
+    ///         // damage of a dagger
+    ///         Die::new(4)
+    ///     } else {
+    ///         Die::empty()
+    ///     }
+    /// });
+    /// let average_damage = damage.get_mean();
+    /// // needs to be truncated because of floating point imprecision
+    /// assert_eq!(
+    ///     format!("{average_damage:.2}"),
+    ///     "1.25");
+    /// ```
     pub fn empty() -> Die {
         Die {
             probabilities: vec![Probability {
@@ -73,6 +250,19 @@ impl ProbabilityDistribution<i32> for Die {
         calc_standard_deviation(self.get_probabilities())
     }
 
+    /// Add an independent die to this one.
+    ///
+    /// Creates and returns a new die as a result.
+    ///
+    /// # Examples
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// let two_d6 = Die::new(6).add_independent(&Die::new(6));
+    /// assert_eq!(
+    ///     two_d6.get_mean(),
+    ///     7.0
+    /// );
+    /// ```
     fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution<i32>) -> Die {
         Die::from_probabilities(
             probability_distribution
@@ -87,6 +277,33 @@ impl ProbabilityDistribution<i32> for Die {
         )
     }
 
+    /// Add a dependent die to this one.
+    ///
+    /// Creates and returns a new die as a result.
+    ///
+    /// # Examples
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// let d4_double_if_max = Die::new(4).add_dependent(&|&val| {
+    ///     if val == 4 {
+    ///         Die::new(4)
+    ///     } else {
+    ///         Die::empty()
+    ///     }
+    /// });
+    /// assert_eq!(
+    ///     d4_double_if_max.get_probabilities(),
+    ///     &vec![
+    ///         Probability { value: 1, chance: 0.25 },
+    ///         Probability { value: 2, chance: 0.25 },
+    ///         Probability { value: 3, chance: 0.25 },
+    ///         Probability { value: 5, chance: 0.0625 },
+    ///         Probability { value: 6, chance: 0.0625 },
+    ///         Probability { value: 7, chance: 0.0625 },
+    ///         Probability { value: 8, chance: 0.0625 },
+    ///     ]
+    /// );
+    /// ```
     fn add_dependent<F>(&self, callback_fn: &F) -> Die
     where
         F: Fn(&i32) -> Die,
@@ -106,6 +323,25 @@ impl ProbabilityDistribution<i32> for Die {
         )
     }
 
+    /// Add an independent die to this one.
+    ///
+    /// # Examples
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// let hit_or_miss = Die::new(20).conditional_chain(&|&val| {
+    ///     if val >= 16 {
+    ///         Die::new(1)
+    ///     } else {
+    ///         Die::empty()
+    ///     }
+    /// });
+    /// assert_eq!(
+    ///     hit_or_miss.get_probabilities(),
+    ///     &vec![
+    ///         Probability { value: 0, chance: 0.75 },
+    ///         Probability { value: 1, chance: 0.25 },
+    ///     ]);
+    /// ```
     fn conditional_chain<F>(&self, callback_fn: &F) -> Die
     where
         F: Fn(&i32) -> Die,
@@ -124,6 +360,22 @@ impl ProbabilityDistribution<i32> for Die {
         )
     }
 
+    /// Adds a flat amount to a die.
+    ///
+    /// # Examples
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// let d4_plus_two = Die::new(4).add_flat(2);
+    /// assert_eq!(
+    ///     d4_plus_two.get_probabilities(),
+    ///     &vec![
+    ///         Probability { value: 3, chance: 0.25 },
+    ///         Probability { value: 4, chance: 0.25 },
+    ///         Probability { value: 5, chance: 0.25 },
+    ///         Probability { value: 6, chance: 0.25 },
+    ///     ]
+    /// );
+    /// ```
     fn add_flat(&self, flat_increase: i32) -> Die {
         Die::from_probabilities(
             self.get_probabilities()
@@ -136,6 +388,17 @@ impl ProbabilityDistribution<i32> for Die {
         )
     }
 
+    /// Returns an iterator over the probabilities of this die.
+    ///
+    /// # Examples
+    /// ```
+    /// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+    /// let sum_of_d6_faces = Die::new(6).iter().map(|prob| prob.value).sum::<i32>();
+    /// assert_eq!(
+    ///     sum_of_d6_faces,
+    ///     21
+    /// );
+    /// ```
     fn iter(&self) -> ProbabilityIter<i32> {
         ProbabilityIter::new(&self.probabilities)
     }

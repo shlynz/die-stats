@@ -1,4 +1,4 @@
-use crate::{Die, Probability, ProbabilityDistribution};
+use crate::{NormalInitializer, Probability, ProbabilityDistribution};
 
 /// Used to determine what to drop.
 pub enum DropType {
@@ -11,40 +11,95 @@ pub enum DropType {
 /// Initializers for dropping `n` results from the evaluated pool of [probability
 /// distributions][`ProbabilityDistribution`].
 pub trait DropInitializer<V, P> {
-    /// Initializes a new `P` and drops `roll_amount` from the specified end.
-    fn new_drop(amount: V, roll_amount: usize, drop_amount: V, drop_condition: DropType) -> P;
+    /// Initializes a new `P` the specified amount of times and drops `drop_amount` from the specified end.
+    fn new_drop(amount: V, times: usize, drop_amount: usize, drop_condition: DropType) -> P
+    where
+        P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V>,
+        V: Copy + Ord + From<i32> + std::iter::Sum,
+        i32: From<V>,
+    {
+        drop_by_condition(&vec![P::new(amount); times], drop_condition, drop_amount)
+    }
+
     /// Initializes a new `P` from a given range and drops `roll_amount` from the specified end.
     fn drop_from_range(
         start: V,
         end: V,
-        roll_amount: usize,
-        drop_amount: V,
+        times: usize,
+        drop_amount: usize,
         drop_condition: DropType,
-    ) -> P;
+    ) -> P
+    where
+        P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V>,
+        V: Copy + Ord + From<i32> + std::iter::Sum,
+        i32: From<V>,
+    {
+        drop_by_condition(
+            &vec![P::from_range(start, end); times],
+            drop_condition,
+            drop_amount,
+        )
+    }
+
     /// Initializes a new `P` from given values and drops `roll_amount` from the specified end.
     fn drop_from_values(
         values: &[V],
-        roll_amount: usize,
-        drop_amount: V,
+        times: usize,
+        drop_amount: usize,
         drop_condition: DropType,
-    ) -> P;
+    ) -> P
+    where
+        P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V>,
+        V: Copy + Ord + From<i32> + std::iter::Sum,
+        i32: From<V>,
+    {
+        drop_by_condition(
+            &vec![P::from_values(values); times],
+            drop_condition,
+            drop_amount,
+        )
+    }
+
     /// Initializes a new `P` from given [probabilities][`Probability`] and drops `roll_amount` from the specified end.
     fn drop_from_probabilities(
         probabilities: Vec<Probability<V>>,
-        roll_amount: usize,
-        drop_amount: V,
+        times: usize,
+        drop_amount: usize,
         drop_condition: DropType,
-    ) -> P;
+    ) -> P
+    where
+        P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V>,
+        V: Copy + Ord + From<i32> + std::iter::Sum,
+        i32: From<V>,
+    {
+        drop_by_condition(
+            &vec![P::from_probabilities(probabilities); times],
+            drop_condition,
+            drop_amount,
+        )
+    }
 }
 
-fn prep_dice(dice: &[Die]) -> Vec<(Vec<i32>, f64)> {
-    if let Some(first) = dice.first() {
-        let first: Vec<Vec<Probability<i32>>> = first
+impl<V, P> DropInitializer<V, P> for P
+where
+    P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V>,
+    V: Copy + Ord + From<i32> + std::iter::Sum,
+    i32: From<V>,
+{
+}
+
+fn prep<T, I>(probability_structs: &[T]) -> Vec<(Vec<I>, f64)>
+where
+    T: ProbabilityDistribution<I>,
+    I: Copy,
+{
+    if let Some(first) = probability_structs.first() {
+        let first: Vec<Vec<Probability<I>>> = first
             .get_probabilities()
             .iter()
             .map(|val| vec![*val])
             .collect();
-        dice[1..]
+        probability_structs[1..]
             .iter()
             .fold(first, |acc, curr| {
                 acc.iter()
@@ -78,9 +133,17 @@ fn prep_dice(dice: &[Die]) -> Vec<(Vec<i32>, f64)> {
     }
 }
 
-fn drop_by_condition(dice: &[Die], drop_condition: DropType, drop_amount: i32) -> Die {
-    Die::from_probabilities(
-        prep_dice(dice)
+fn drop_by_condition<T, P>(
+    probability_structs: &[P],
+    drop_condition: DropType,
+    drop_amount: usize,
+) -> P
+where
+    P: ProbabilityDistribution<T> + NormalInitializer<T, P>,
+    T: Copy + Ord + std::iter::Sum,
+{
+    P::from_probabilities(
+        prep(probability_structs)
             .iter()
             .map(|(values, chance)| {
                 let mut new_values = values.clone();
@@ -95,10 +158,8 @@ fn drop_by_condition(dice: &[Die], drop_condition: DropType, drop_amount: i32) -
                     new_values.pop();
                 }
 
-                let value: i32 = new_values.iter().sum();
-
                 Probability {
-                    value,
+                    value: new_values.into_iter().sum(),
                     chance: *chance,
                 }
             })
@@ -106,64 +167,15 @@ fn drop_by_condition(dice: &[Die], drop_condition: DropType, drop_amount: i32) -
     )
 }
 
-impl DropInitializer<i32, Die> for Die {
-    fn new_drop(sides: i32, roll_amount: usize, drop_amount: i32, drop_condition: DropType) -> Die {
-        drop_by_condition(
-            &vec![Die::new(sides); roll_amount],
-            drop_condition,
-            drop_amount,
-        )
-    }
-
-    fn drop_from_range(
-        start: i32,
-        end: i32,
-        roll_amount: usize,
-        drop_amount: i32,
-        drop_condition: DropType,
-    ) -> Die {
-        drop_by_condition(
-            &vec![Die::from_range(start, end); roll_amount],
-            drop_condition,
-            drop_amount,
-        )
-    }
-
-    fn drop_from_values(
-        values: &[i32],
-        roll_amount: usize,
-        drop_amount: i32,
-        drop_condition: DropType,
-    ) -> Die {
-        drop_by_condition(
-            &vec![Die::from_values(values); roll_amount],
-            drop_condition,
-            drop_amount,
-        )
-    }
-
-    fn drop_from_probabilities(
-        probabilities: Vec<Probability<i32>>,
-        roll_amount: usize,
-        drop_amount: i32,
-        drop_condition: DropType,
-    ) -> Die {
-        drop_by_condition(
-            &vec![Die::from_probabilities(probabilities); roll_amount],
-            drop_condition,
-            drop_amount,
-        )
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Die;
 
     #[test]
     fn prep_dice_same() {
         let input = vec![Die::new(2), Die::new(2), Die::new(2)];
-        let fn_result = prep_dice(&input);
+        let fn_result = prep(&input);
         assert_eq!(
             fn_result,
             vec![
@@ -182,7 +194,7 @@ mod tests {
     #[test]
     fn prep_dice_difference() {
         let input = vec![Die::new(2), Die::new(3), Die::new(1)];
-        let fn_result = prep_dice(&input);
+        let fn_result = prep(&input);
         assert_eq!(
             fn_result,
             vec![

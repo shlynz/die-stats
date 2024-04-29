@@ -6,10 +6,10 @@ pub trait ProbabilityDistribution<T> {
     fn add_independent(&self, probability_distribution: &impl ProbabilityDistribution<T>) -> Self;
     fn add_dependent<F>(&self, callback_fn: &F) -> Self
     where
-        F: Fn(&i32) -> Self;
+        F: Fn(&T) -> Self;
     fn conditional_chain<F>(&self, callback_fn: &F) -> Self
     where
-        F: Fn(&i32) -> Self;
+        F: Fn(&T) -> Self;
     fn add_flat(&self, flat_increase: i32) -> Self;
     fn get_probabilities(&self) -> &Vec<Probability<T>>;
     fn iter(&self) -> ProbabilityIter<T>;

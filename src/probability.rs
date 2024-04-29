@@ -9,7 +9,7 @@ use core::ops::{Add, Mul};
 ///
 /// # Examples
 /// ```
-/// # use die_stats::{ Die, Probability, ProbabilityDistribution };
+/// # use die_stats::{ Die, Probability, ProbabilityDistribution, NormalInitializer };
 /// # let coin = Die::new(2);
 /// assert_eq!(
 ///     coin.get_probabilities(),

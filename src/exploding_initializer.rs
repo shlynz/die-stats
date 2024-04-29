@@ -1,4 +1,4 @@
-use crate::{Die, Probability};
+use crate::{NormalInitializer, Probability, ProbabilityDistribution};
 
 /// Used to determine the fuse.
 pub enum ExplodingCondition {
@@ -21,79 +21,96 @@ pub trait ExplodingInitializer<V, P> {
         amount: V,
         exploding_range: V,
         exploding_condition: ExplodingCondition,
-        exploding_die: P,
-    ) -> P;
+        exploding: P,
+    ) -> P
+    where
+        P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V> + 'static,
+        V: Copy + Ord + From<i32> + 'static,
+        i32: From<V>,
+    {
+        P::new(amount).add_dependent(&exploding_helper(
+            exploding_range,
+            exploding_condition,
+            exploding,
+        ))
+    }
+
     /// Initializes a new `P` from given range and explodes on given condition.
     fn exploding_from_range(
         start: V,
         end: V,
         exploding_range: V,
         exploding_condition: ExplodingCondition,
-        exploding_die: P,
-    ) -> P;
+        exploding: P,
+    ) -> P
+    where
+        P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V> + 'static,
+        V: Copy + Ord + From<i32> + 'static,
+        i32: From<V>,
+    {
+        P::from_range(start, end).add_dependent(&exploding_helper(
+            exploding_range,
+            exploding_condition,
+            exploding,
+        ))
+    }
+
     /// Initializes a new `P` from given values and explodes on given condition.
     fn exploding_from_values(
         values: &[V],
         exploding_range: V,
         exploding_condition: ExplodingCondition,
-        exploding_die: P,
-    ) -> P;
+        exploding: P,
+    ) -> P
+    where
+        P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V> + 'static,
+        V: Copy + Ord + From<i32> + 'static,
+        i32: From<V>,
+    {
+        P::from_values(values).add_dependent(&exploding_helper(
+            exploding_range,
+            exploding_condition,
+            exploding,
+        ))
+    }
+
     /// Initializes a new `P` from given [probabilities][`Probability`] and explodes on given condition.
     fn exploding_from_probabilities(
         probabilities: Vec<Probability<V>>,
         exploding_range: V,
         exploding_condition: ExplodingCondition,
-        exploding_die: P,
-    ) -> P;
-}
-
-impl ExplodingInitializer<i32, Die> for Die {
-    fn new_exploding(
-        sides: i32,
-        exploding_range: i32,
-        exploding_condition: ExplodingCondition,
-        exploding_die: Die,
-    ) -> Die {
-        Die::new(sides) + exploding_die_helper(exploding_range, exploding_condition, exploding_die)
-    }
-
-    fn exploding_from_range(
-        start: i32,
-        end: i32,
-        exploding_range: i32,
-        exploding_condition: ExplodingCondition,
-        exploding_die: Die,
-    ) -> Die {
-        Die::from_range(start, end)
-            + exploding_die_helper(exploding_range, exploding_condition, exploding_die)
-    }
-
-    fn exploding_from_values(
-        values: &[i32],
-        exploding_range: i32,
-        exploding_condition: ExplodingCondition,
-        exploding_die: Die,
-    ) -> Die {
-        Die::from_values(values)
-            + exploding_die_helper(exploding_range, exploding_condition, exploding_die)
-    }
-
-    fn exploding_from_probabilities(
-        probabilities: Vec<Probability<i32>>,
-        exploding_range: i32,
-        exploding_condition: ExplodingCondition,
-        exploding_die: Die,
-    ) -> Die {
-        Die::from_probabilities(probabilities)
-            + exploding_die_helper(exploding_range, exploding_condition, exploding_die)
+        exploding: P,
+    ) -> P
+    where
+        P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V> + 'static,
+        V: Copy + Ord + From<i32> + 'static,
+        i32: From<V>,
+    {
+        P::from_probabilities(probabilities).add_dependent(&exploding_helper(
+            exploding_range,
+            exploding_condition,
+            exploding,
+        ))
     }
 }
 
-fn exploding_die_helper(
-    exploding_range: i32,
+impl<V, P> ExplodingInitializer<V, P> for P
+where
+    P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V> + 'static,
+    V: Copy + Ord + From<i32> + 'static,
+    i32: From<V>,
+{
+}
+
+fn exploding_helper<V, P>(
+    exploding_range: V,
     exploding_condition: ExplodingCondition,
-    exploding_die: Die,
-) -> Box<dyn Fn(&i32) -> Die> {
+    exploding: P,
+) -> Box<dyn Fn(&V) -> P>
+where
+    P: Clone + NormalInitializer<V, P> + 'static,
+    V: Copy + Ord + From<i32> + 'static,
+{
     Box::new(move |&prob: &_| {
         if match exploding_condition {
             ExplodingCondition::Lower => prob < exploding_range,
@@ -102,9 +119,9 @@ fn exploding_die_helper(
             ExplodingCondition::GreaterOrEqual => prob >= exploding_range,
             ExplodingCondition::Greater => prob > exploding_range,
         } {
-            exploding_die.clone()
+            exploding.clone()
         } else {
-            Die::empty()
+            P::empty()
         }
     })
 }
@@ -112,29 +129,30 @@ fn exploding_die_helper(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Die;
 
     #[test]
     fn exploding_condition_equality() {
         let expected_die = Die::new(3);
-        let lower_fn = exploding_die_helper(0, ExplodingCondition::Lower, expected_die.clone());
+        let lower_fn = exploding_helper(0, ExplodingCondition::Lower, expected_die.clone());
         assert_eq!(lower_fn(&-1), expected_die.clone());
         assert_ne!(lower_fn(&0), expected_die.clone());
         assert_ne!(lower_fn(&1), expected_die.clone());
         let lower_eq_fn =
-            exploding_die_helper(0, ExplodingCondition::LowerOrEqual, expected_die.clone());
+            exploding_helper(0, ExplodingCondition::LowerOrEqual, expected_die.clone());
         assert_eq!(lower_eq_fn(&-1), expected_die.clone());
         assert_eq!(lower_eq_fn(&0), expected_die.clone());
         assert_ne!(lower_eq_fn(&1), expected_die.clone());
-        let eq_fn = exploding_die_helper(0, ExplodingCondition::Equal, expected_die.clone());
+        let eq_fn = exploding_helper(0, ExplodingCondition::Equal, expected_die.clone());
         assert_ne!(eq_fn(&-1), expected_die.clone());
         assert_eq!(eq_fn(&0), expected_die.clone());
         assert_ne!(eq_fn(&1), expected_die.clone());
         let greater_eq_fn =
-            exploding_die_helper(0, ExplodingCondition::GreaterOrEqual, expected_die.clone());
+            exploding_helper(0, ExplodingCondition::GreaterOrEqual, expected_die.clone());
         assert_ne!(greater_eq_fn(&-1), expected_die.clone());
         assert_eq!(greater_eq_fn(&0), expected_die.clone());
         assert_eq!(greater_eq_fn(&1), expected_die.clone());
-        let greater_fn = exploding_die_helper(0, ExplodingCondition::Greater, expected_die.clone());
+        let greater_fn = exploding_helper(0, ExplodingCondition::Greater, expected_die.clone());
         assert_ne!(greater_fn(&-1), expected_die.clone());
         assert_ne!(greater_fn(&0), expected_die.clone());
         assert_eq!(greater_fn(&1), expected_die.clone());

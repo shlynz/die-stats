@@ -1,4 +1,6 @@
+use crate::common::*;
 use crate::probability::Probability;
+use std::fmt::Write;
 
 /// Base structure for mutating and evaluating different types of collections of
 /// [probabilities][`Probability`].
@@ -12,14 +14,92 @@ pub trait ProbabilityDistribution<T> {
         F: Fn(&T) -> Self;
     fn add_flat(&self, flat_increase: i32) -> Self;
     fn get_probabilities(&self) -> &Vec<Probability<T>>;
-    fn iter(&self) -> ProbabilityIter<T>;
-    fn get_results(&self) -> String;
-    fn get_details(&self) -> String;
-    fn get_min(&self) -> i32;
-    fn get_max(&self) -> i32;
-    fn get_variance(&self) -> f64;
-    fn get_standard_deviation(&self) -> f64;
-    fn get_mean(&self) -> f64;
+
+    /// Returns an iterator over the probabilities of this distribution.
+    fn iter(&self) -> ProbabilityIter<T> {
+        ProbabilityIter::new(self.get_probabilities())
+    }
+
+    fn get_results(&self) -> String
+    where
+        Probability<T>: std::fmt::Display,
+    {
+        // TODO get rid of newline at end
+        self.iter().fold(String::new(), |mut out, prob| {
+            let _ = writeln!(out, "{prob}");
+            out
+        })
+    }
+
+    fn get_details(&self) -> String
+    where
+        T: Copy + std::ops::Mul<T, Output = T> + std::fmt::Display,
+        Probability<T>: Ord,
+        f64: From<T>,
+    {
+        format!(
+            "\
+                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
+                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\
+                ",
+            "Min",
+            self.get_min(),
+            "Max",
+            self.get_max(),
+            "Mean",
+            self.get_mean(),
+            "Variance",
+            self.get_variance(),
+            "Standard Deviation",
+            self.get_standard_deviation()
+        )
+    }
+
+    fn get_min(&self) -> T
+    where
+        Probability<T>: Ord,
+        T: Copy,
+    {
+        self.get_probabilities().iter().min().unwrap().value
+    }
+
+    fn get_max(&self) -> T
+    where
+        Probability<T>: Ord,
+        T: Copy,
+    {
+        self.get_probabilities().iter().max().unwrap().value
+    }
+
+    fn get_variance(&self) -> f64
+    where
+        Probability<T>: Ord,
+        T: Copy + std::ops::Mul<T, Output = T>,
+        f64: From<T>,
+    {
+        calc_variance(self.get_probabilities())
+    }
+
+    fn get_standard_deviation(&self) -> f64
+    where
+        Probability<T>: Ord,
+        T: Copy + std::ops::Mul<T, Output = T>,
+        f64: From<T>,
+    {
+        calc_standard_deviation(self.get_probabilities())
+    }
+
+    fn get_mean(&self) -> f64
+    where
+        Probability<T>: Ord,
+        T: Copy + std::ops::Mul<T, Output = T>,
+        f64: From<T>,
+    {
+        calc_mean(self.get_probabilities())
+    }
 }
 
 /// Iterator over a list of probabilities.

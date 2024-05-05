@@ -11,14 +11,23 @@ pub enum DropType {
 /// Initializers for dropping `n` results from the evaluated pool of [probability
 /// distributions][`ProbabilityDistribution`].
 pub trait DropInitializer<V, P> {
-    /// Initializes a new `P` the specified amount of times and drops `drop_amount` from the specified end.
-    fn new_drop(amount: V, times: usize, drop_amount: usize, drop_condition: DropType) -> P
+    /// Initializes a new `P` from given [probabilities][`Probability`] and drops `roll_amount` from the specified end.
+    fn drop_from_probabilities(
+        probabilities: Vec<Probability<V>>,
+        times: usize,
+        drop_amount: usize,
+        drop_condition: DropType,
+    ) -> P
     where
         P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V>,
         V: Copy + Ord + From<i32> + std::iter::Sum,
         i32: From<V>,
     {
-        drop_by_condition(&vec![P::new(amount); times], drop_condition, drop_amount)
+        drop_by_condition(
+            &vec![P::from_probabilities(probabilities); times],
+            drop_condition,
+            drop_amount,
+        )
     }
 
     /// Initializes a new `P` from a given range and drops `roll_amount` from the specified end.
@@ -60,23 +69,14 @@ pub trait DropInitializer<V, P> {
         )
     }
 
-    /// Initializes a new `P` from given [probabilities][`Probability`] and drops `roll_amount` from the specified end.
-    fn drop_from_probabilities(
-        probabilities: Vec<Probability<V>>,
-        times: usize,
-        drop_amount: usize,
-        drop_condition: DropType,
-    ) -> P
+    /// Initializes a new `P` the specified amount of times and drops `drop_amount` from the specified end.
+    fn new_drop(amount: V, times: usize, drop_amount: usize, drop_condition: DropType) -> P
     where
         P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V>,
         V: Copy + Ord + From<i32> + std::iter::Sum,
         i32: From<V>,
     {
-        drop_by_condition(
-            &vec![P::from_probabilities(probabilities); times],
-            drop_condition,
-            drop_amount,
-        )
+        drop_by_condition(&vec![P::new(amount); times], drop_condition, drop_amount)
     }
 }
 

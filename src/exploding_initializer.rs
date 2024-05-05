@@ -16,9 +16,9 @@ pub enum ExplodingCondition {
 
 /// Initializers for "exploding" a [probability distribution][`crate::ProbabilityDistribution`] on a given condition.
 pub trait ExplodingInitializer<V, P> {
-    /// Initializes a new `P` and explodes on given condition.
-    fn new_exploding(
-        amount: V,
+    /// Initializes a new `P` from given [probabilities][`Probability`] and explodes on given condition.
+    fn exploding_from_probabilities(
+        probabilities: Vec<Probability<V>>,
         exploding_range: V,
         exploding_condition: ExplodingCondition,
         exploding: P,
@@ -28,7 +28,7 @@ pub trait ExplodingInitializer<V, P> {
         V: Copy + Ord + From<i32> + 'static,
         i32: From<V>,
     {
-        P::new(amount).add_dependent(&exploding_helper(
+        P::from_probabilities(probabilities).add_dependent(&exploding_helper(
             exploding_range,
             exploding_condition,
             exploding,
@@ -74,9 +74,9 @@ pub trait ExplodingInitializer<V, P> {
         ))
     }
 
-    /// Initializes a new `P` from given [probabilities][`Probability`] and explodes on given condition.
-    fn exploding_from_probabilities(
-        probabilities: Vec<Probability<V>>,
+    /// Initializes a new `P` and explodes on given condition.
+    fn new_exploding(
+        amount: V,
         exploding_range: V,
         exploding_condition: ExplodingCondition,
         exploding: P,
@@ -86,7 +86,7 @@ pub trait ExplodingInitializer<V, P> {
         V: Copy + Ord + From<i32> + 'static,
         i32: From<V>,
     {
-        P::from_probabilities(probabilities).add_dependent(&exploding_helper(
+        P::new(amount).add_dependent(&exploding_helper(
             exploding_range,
             exploding_condition,
             exploding,

@@ -6,7 +6,6 @@
 //! arithmetic implementations to mutate created die.
 //!
 //! Yet to be implemented but planned features:
-//! - [ ] Don't allow creation of a [`Die`] with total chance of >1
 //! - [ ] `FromStr` to [`Die`]
 //! - [ ] Complete arithmetic implementations for [`Die`]
 //! - [ ] Order functions alphabetically to keep them in line with the outline of the docs

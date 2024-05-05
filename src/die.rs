@@ -78,7 +78,11 @@ impl NormalInitializer<i32, Die> for Die {
     /// );
     /// ```
     fn from_probabilities(probabilities: Vec<Probability<i32>>) -> Die {
-        if probabilities.is_empty() {
+        let sum = probabilities
+            .iter()
+            .fold(0.0, |acc, curr| acc + curr.chance);
+        // TODO properly return error instead of empyt die
+        if probabilities.is_empty() || sum >= 1.0 + ALLOWED_ERROR || sum <= 1.0 - ALLOWED_ERROR {
             return Die::empty();
         }
         Die {
@@ -447,5 +451,23 @@ mod tests {
                 }
             ]
         )
+    }
+
+    #[test]
+    fn probability_around_hundred() {
+        assert_eq!(
+            Die::from_probabilities(vec![Probability {
+                value: 1,
+                chance: 1.00001
+            }]),
+            Die::empty()
+        );
+        assert_eq!(
+            Die::from_probabilities(vec![Probability {
+                value: 1,
+                chance: 9.99999
+            }]),
+            Die::empty()
+        );
     }
 }

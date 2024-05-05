@@ -5,6 +5,7 @@ pub const NAME_FORMAT: usize = 20;
 pub const NUMBER_FORMAT: usize = 10;
 pub const DECIMAL_FORMAT: usize = 3;
 pub const BAR_LENGTH: usize = 50;
+pub const ALLOWED_ERROR: f64 = 1e-5;
 
 pub fn values_to_probabilities<T>(values: &[T]) -> Vec<Probability<T>>
 where

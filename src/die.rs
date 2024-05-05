@@ -1,9 +1,8 @@
 use crate::common::*;
 use crate::probability::Probability;
-use crate::probability_distribution::{ProbabilityDistribution, ProbabilityIter};
+use crate::probability_distribution::ProbabilityDistribution;
 use crate::NormalInitializer;
 use core::ops::Add;
-use std::fmt::Write;
 
 /// A representation of a die, using the provided initializers.
 ///
@@ -91,26 +90,6 @@ impl NormalInitializer<i32, Die> for Die {
 impl ProbabilityDistribution<i32> for Die {
     fn get_probabilities(&self) -> &Vec<Probability<i32>> {
         &self.probabilities
-    }
-
-    fn get_min(&self) -> i32 {
-        self.get_probabilities().iter().min().unwrap().value
-    }
-
-    fn get_max(&self) -> i32 {
-        self.get_probabilities().iter().max().unwrap().value
-    }
-
-    fn get_mean(&self) -> f64 {
-        calc_mean(self.get_probabilities())
-    }
-
-    fn get_variance(&self) -> f64 {
-        calc_variance(self.get_probabilities())
-    }
-
-    fn get_standard_deviation(&self) -> f64 {
-        calc_standard_deviation(self.get_probabilities())
     }
 
     /// Add an independent die to this one.
@@ -248,51 +227,6 @@ impl ProbabilityDistribution<i32> for Die {
                     chance: prob.chance,
                 })
                 .collect(),
-        )
-    }
-
-    /// Returns an iterator over the probabilities of this die.
-    ///
-    /// # Examples
-    /// ```
-    /// # use die_stats::{ Die, Probability, ProbabilityDistribution, NormalInitializer };
-    /// let sum_of_d6_faces = Die::new(6).iter().map(|prob| prob.value).sum::<i32>();
-    /// assert_eq!(
-    ///     sum_of_d6_faces,
-    ///     21
-    /// );
-    /// ```
-    fn iter(&self) -> ProbabilityIter<i32> {
-        ProbabilityIter::new(&self.probabilities)
-    }
-
-    fn get_results(&self) -> String {
-        // TODO get rid of newline at end
-        self.iter().fold(String::new(), |mut out, prob| {
-            let _ = writeln!(out, "{prob}");
-            out
-        })
-    }
-
-    fn get_details(&self) -> String {
-        format!(
-            "\
-                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
-                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
-                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
-                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\n\
-                {:<NAME_FORMAT$}{:>NUMBER_FORMAT$.DECIMAL_FORMAT$}\
-                ",
-            "Min",
-            self.get_min(),
-            "Max",
-            self.get_max(),
-            "Mean",
-            self.get_mean(),
-            "Variance",
-            self.get_variance(),
-            "Standard Deviation",
-            self.get_standard_deviation()
         )
     }
 }

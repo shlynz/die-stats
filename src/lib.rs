@@ -11,7 +11,6 @@
 //! - [ ] Order functions alphabetically to keep them in line with the outline of the docs
 //! - [ ] Move implementations to blanket implementations
 //!   - [ ] Add for [`Probability`]
-//! - [ ] Implement `From<i32>` for [`Die`] to convert integers to a die of just that face
 //! - [ ] Round results from getters to avoid floating point imprecisions
 //!
 //! [probability distributions]: `ProbabilityDistribution`

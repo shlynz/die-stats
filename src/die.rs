@@ -303,6 +303,12 @@ impl PartialEq for Die {
 
 impl Eq for Die {}
 
+impl From<i32> for Die {
+    fn from(value: i32) -> Self {
+        Die::from_values(&vec![value])
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -469,5 +475,10 @@ mod tests {
             }]),
             Die::empty()
         );
+    }
+
+    #[test]
+    fn from_i32() {
+        assert_eq!(Die::from_values(&vec![8]), 8.into())
     }
 }

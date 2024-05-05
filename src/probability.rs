@@ -1,6 +1,5 @@
 use crate::common::{BAR_LENGTH, DECIMAL_FORMAT, NUMBER_FORMAT};
 use core::cmp::Ordering;
-
 use core::ops::{Add, Mul};
 
 /// Represents one outcome of a probability distribution.
@@ -26,7 +25,10 @@ pub struct Probability<T> {
     pub chance: f64,
 }
 
-impl Add for Probability<i32> {
+impl<T> Add for Probability<T>
+where
+    T: std::ops::Add<T, Output = T>,
+{
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
@@ -37,8 +39,8 @@ impl Add for Probability<i32> {
     }
 }
 
-impl Mul<f64> for Probability<i32> {
-    type Output = Probability<i32>;
+impl<T> Mul<f64> for Probability<T> {
+    type Output = Probability<T>;
 
     fn mul(self, rhs: f64) -> Self::Output {
         Probability {
@@ -59,19 +61,29 @@ where
 
 impl<T> Eq for Probability<T> where T: PartialEq {}
 
-impl PartialOrd for Probability<i32> {
+impl<T> PartialOrd for Probability<T>
+where
+    T: Ord,
+{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for Probability<i32> {
+impl<T> Ord for Probability<T>
+where
+    T: Ord,
+    Probability<T>: PartialOrd,
+{
     fn cmp(&self, other: &Self) -> Ordering {
         self.value.cmp(&other.value)
     }
 }
 
-impl std::fmt::Display for Probability<i32> {
+impl<T> std::fmt::Display for Probability<T>
+where
+    T: std::fmt::Display,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,

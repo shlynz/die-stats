@@ -9,8 +9,6 @@
 //! - [ ] `FromStr` to [`Die`]
 //! - [ ] Complete arithmetic implementations for [`Die`]
 //! - [ ] Order functions alphabetically to keep them in line with the outline of the docs
-//! - [ ] Move implementations to blanket implementations
-//!   - [ ] Add for [`Probability`]
 //! - [ ] Round results from getters to avoid floating point imprecisions
 //!
 //! [probability distributions]: `ProbabilityDistribution`

@@ -9,6 +9,7 @@
 //! - [ ] `FromStr` to [`Die`]
 //! - [ ] Complete arithmetic implementations for [`Die`]
 //! - [ ] Round results from getters to avoid floating point imprecisions
+//! - [ ] Expand given examples to actually show capabilities
 //!
 //! [probability distributions]: `ProbabilityDistribution`
 //! [exploding]: `ExplodingInitializer`

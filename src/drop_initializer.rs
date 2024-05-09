@@ -11,7 +11,10 @@ pub enum DropType {
 /// Initializers for dropping `n` results from the evaluated pool of [probability
 /// distributions][`ProbabilityDistribution`].
 pub trait DropInitializer<V, P> {
-    /// Initializes a new `P` from given [probabilities][`Probability`] and drops `roll_amount` from the specified end.
+    /// Initializes a new `P` from given [probabilities][`Probability`] and drops `roll_amount`
+    /// from the specified end.
+    ///
+    /// Uses [`from_probabilities`][`NormalInitializer::from_probabilities`] internally.
     fn drop_from_probabilities(
         probabilities: Vec<Probability<V>>,
         times: usize,
@@ -31,6 +34,8 @@ pub trait DropInitializer<V, P> {
     }
 
     /// Initializes a new `P` from a given range and drops `roll_amount` from the specified end.
+    ///
+    /// Uses [`from_range`][`NormalInitializer::from_range`] internally.
     fn drop_from_range(
         start: V,
         end: V,
@@ -51,6 +56,8 @@ pub trait DropInitializer<V, P> {
     }
 
     /// Initializes a new `P` from given values and drops `roll_amount` from the specified end.
+    ///
+    /// Uses [`from_values`][`NormalInitializer::from_values`] internally.
     fn drop_from_values(
         values: &[V],
         times: usize,
@@ -70,6 +77,8 @@ pub trait DropInitializer<V, P> {
     }
 
     /// Initializes a new `P` the specified amount of times and drops `drop_amount` from the specified end.
+    ///
+    /// Uses [`new`][`NormalInitializer::new`] internally.
     fn new_drop(amount: V, times: usize, drop_amount: usize, drop_condition: DropType) -> P
     where
         P: Clone + NormalInitializer<V, P> + ProbabilityDistribution<V>,

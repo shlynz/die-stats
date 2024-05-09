@@ -19,10 +19,10 @@ use core::ops::{Add, Mul};
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Probability<T> {
-    /// Assosiated value of this probability
-    pub value: T,
     /// Odds of assosiated value happening
     pub chance: f64,
+    /// Assosiated value of this probability
+    pub value: T,
 }
 
 impl<T> Add for Probability<T>

@@ -15,13 +15,6 @@ pub trait NormalInitializer<T, P: NormalInitializer<T, P>> {
         P::from_values(&vec![0.into()])
     }
 
-    fn from_values(values: &[T]) -> P
-    where
-        T: Copy,
-    {
-        Self::from_probabilities(values_to_probabilities(values))
-    }
-
     fn from_range(start: T, end: T) -> P
     where
         T: Copy + Ord + From<i32>,
@@ -39,6 +32,13 @@ pub trait NormalInitializer<T, P: NormalInitializer<T, P>> {
                 )
             }
         }
+    }
+
+    fn from_values(values: &[T]) -> P
+    where
+        T: Copy,
+    {
+        Self::from_probabilities(values_to_probabilities(values))
     }
 
     fn new(size: T) -> P

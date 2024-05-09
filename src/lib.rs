@@ -8,7 +8,6 @@
 //! Yet to be implemented but planned features:
 //! - [ ] `FromStr` to [`Die`]
 //! - [ ] Complete arithmetic implementations for [`Die`]
-//! - [ ] Order functions alphabetically to keep them in line with the outline of the docs
 //! - [ ] Round results from getters to avoid floating point imprecisions
 //!
 //! [probability distributions]: `ProbabilityDistribution`

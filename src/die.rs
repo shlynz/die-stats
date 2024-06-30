@@ -188,9 +188,9 @@ impl ProbabilityDistribution<i32> for Die {
     ///         Probability { value: 1, chance: 0.25 },
     ///     ]);
     /// ```
-    fn conditional_chain<F>(&self, callback_fn: &F) -> Die
+    fn conditional_chain<F>(&self, callback_fn: &mut F) -> Die
     where
-        F: Fn(&i32) -> Die,
+        F: FnMut(&i32) -> Die,
     {
         Die::from_probabilities(
             self.get_probabilities()
@@ -305,7 +305,7 @@ impl Eq for Die {}
 
 impl From<i32> for Die {
     fn from(value: i32) -> Self {
-        Die::from_values(&vec![value])
+        Die::from_values(&[value])
     }
 }
 

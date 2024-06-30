@@ -13,7 +13,7 @@ pub trait NormalInitializer<T, P: NormalInitializer<T, P>> {
     where
         T: Copy + From<i32>,
     {
-        P::from_values(&vec![0.into()])
+        P::from_values(&[0.into()])
     }
 
     /// Creates a new distribution with consecutive values between, and including, start and end of
